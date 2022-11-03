@@ -36,8 +36,6 @@ klippy::klippy(position = c('top', 'right'))
 
 ----
 
-:::::::::::::: {.columns}
-::: {.column width="50%"}
 
 # **Replication package**
 ### Rob Franken - Radboud University
@@ -48,19 +46,17 @@ Last compiled on `r format(Sys.time(), '%B, %Y')`
 ----
   
 
-:::
-::: {.column width="50%"}
-
-![](images/egonet.png)
-
-:::
-::::::::::::::
-
 This website is a replication package for the discrete choice experiment by @Franken2022. It contains R code. 
 All scripts can be found on [Github](https://github.com/robfranken/DCE_sports). 
 
 
 Use the top menu to navigate through the sections.
+
+
+![](images/dce.png)
+
+
+
 
 
 ----
