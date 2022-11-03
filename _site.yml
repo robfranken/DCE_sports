@@ -14,7 +14,11 @@ navbar:
     - icon: fa-home
       href: index.html
     - text: "Preparation"
-      href: prep.html
+      menu:
+        - text: "ABS"
+          href: prep.html
+        - text: "I&O"
+          href: prep2.html
   
   right:
     - icon: fab fa-github
