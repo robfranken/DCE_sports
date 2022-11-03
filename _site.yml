@@ -19,6 +19,8 @@ navbar:
           href: prep.html
         - text: "I&O"
           href: prep2.html
+    - text: "Analyses"
+      href: analyse.html
   
   right:
     - icon: fab fa-github

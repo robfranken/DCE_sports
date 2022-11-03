@@ -1,5 +1,5 @@
 ---
-title: "Data preparation"
+title: "ABS data"
 bibliography: references.bib
 date: "Last compiled on `r format(Sys.time(), '%B, %Y')`"
 output: 
@@ -93,18 +93,129 @@ fpackage.check(packages)
 
 # load in raw data
 
+I load in raw, non-public data of the second wave of the survey project *Sports & Networks* [Franken et al., -@data2022]. This wave contains the DCE data. The data were deposited in [DANS EASY](link), but are not publicly accessible. 
+
+```{r,eval=F}
+df <- read.csv("./rawdata/results-survey868275.csv")
+```
+
 <br>
 
 # data wrangling
+
+```{r,eval=F}
+# first, delete fake response;
+fakeid <- which(df$email  %in% "rob.franken@ru.nl")
+df <- df[-fakeid,]
+
+# add id 
+df$id <- 1:nrow(df)
+
+# to long format
+
+# each list element contains the choices for each set. thus presatielist[[2]][3] is the
+# 'presatie'-attribute of person 3, in choice set 
+
+prestatielist <- list()
+prestatielist[[1]] <- c("attribute_16", "attribute_17", "attribute_18")
+prestatielist[[2]] <- c("attribute_19", "attribute_20", "attribute_31")
+prestatielist[[3]] <- c("attribute_32", "attribute_33", "attribute_34")
+
+kennislist <- list()
+kennislist[[1]] <- c("attribute_35", "attribute_36", "attribute_37")
+kennislist[[2]] <- c("attribute_38", "attribute_39", "attribute_40")
+kennislist[[3]] <- c("attribute_41", "attribute_42", "attribute_43")
+
+gezelliglist <- list()
+gezelliglist[[1]] <- c("attribute_44", "attribute_45", "attribute_46")
+gezelliglist[[2]] <- c("attribute_47", "attribute_48", "attribute_49")
+gezelliglist[[3]] <- c("attribute_50", "attribute_51", "attribute_52")
+
+esteemlist <- list()
+esteemlist[[1]] <- c("attribute_53", "attribute_54", "attribute_55")
+esteemlist[[2]] <- c("attribute_56", "attribute_57", "attribute_58")
+esteemlist[[3]] <- c("attribute_59", "attribute_60", "attribute_61")
+
+chosen <- c("CS1", "CS2", "CS3")
+
+
+for (set in 1:3) {
+
+    # to long format
+    
+  for (choice in 1:3) {
+
+  
+        data <- as.data.frame(df)
+        data$set <- set
+        data$options <- choice
+        data$prestatie <- data[, names(data) == prestatielist[[set]][choice]]
+        data$kennis <- data[, names(data) == kennislist[[set]][choice]]
+        data$gezellig <- data[, names(data) == gezelliglist[[set]][choice]]
+        data$esteem <- data[, names(data) == esteemlist[[set]][choice]]
+        data$chosen <- data[, names(data) == chosen[set]]
+        data <- data[, names(data) %in% c("id", "set", "options", "prestatie", "kennis", "gezellig",
+            "esteem", "chosen")]
+        if (set == 1 & choice == 1) {
+            df_long <- data
+        } else {
+            df_long <- rbind(df_long, data)
+        }
+    }
+}
+
+# order
+df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
+
+# define the choice
+df_long$choice <- (df_long$chosen == c("Persoon 1", "Persoon 2", "Persoon 3")[df_long$options])
+```
+
+<!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) --->
 
 <br>
 
 # make ready for mlogit
 
+```{r, eval=F}
+# first we need an id_alt (identification of alternatives), thus specific combi of facets
+{
+    df_long$id_alt <- as.numeric(as.factor(trimws(df_long$prestatie))) * 1000 + as.numeric(as.factor(trimws(df_long$kennis))) *
+        100 + as.numeric(as.factor(trimws(df_long$gezellig))) * 10 + as.numeric(as.factor(trimws(df_long$esteem)))
+
+}
+
+# we also need an id for each specific choice set, thus combi of respnr and set
+df_long$id_choice <- df_long$id * 10 + df_long$set
+
+length(unique(df_long$id))
+length(unique(df_long$id_choice))
+sum(df_long$choice)#no missings on choice. !be aware these need to be deleted for mlogit. 
+
+# need to delete id_choice where no choice is made
+
+# do we have duplicates?
+df_long %>%
+    select(c("id_choice", "id_alt")) -> df_sel
+dups <- duplicated(df_sel)
+sum(dups)
+
+# and with no duplicates and no choice sets without choices, this should work 
+df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt",
+    shape = "long")
+
+```
+
 <br>
 
 # save data object
+```{r, eval=F}
+fsave(df_ml, "abs_ml.RData")
+```
+<br>
 
+---
 
+## References
 
 
