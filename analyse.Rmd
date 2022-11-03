@@ -1,5 +1,5 @@
 ---
-title: "ABS data"
+title: "Conditional logit model"
 bibliography: references.bib
 date: "Last compiled on `r format(Sys.time(), '%B, %Y')`"
 output: 
