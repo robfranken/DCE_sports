@@ -36,12 +36,11 @@ klippy::klippy(position = c('top', 'right'))
 
 ----
 
-
 # **Replication package**
-### Rob Franken - Radboud University
+### *Choosing your sports partners!*
+#### Rob Franken - Radboud University
 Last compiled on `r format(Sys.time(), '%B, %Y')`
 
-<br>
 
 ----
   

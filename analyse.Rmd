@@ -98,6 +98,7 @@ fpackage.check(packages)
 #get todays date:
 today <- gsub("-", "", Sys.Date())
 
+
 abs_ml <- fload(paste0("./data/processed/",today,"abs_ml.RData"))
 io_ml <- fload(paste0("./data/processed/",today,"io_ml.RData"))
 ```
@@ -126,8 +127,29 @@ knitr::kable(res, digits=3, "html",  caption="Conditional logit model: preferenc
 
 ## I&O
 
+Estimate models, same output in list and save the list
+
 ```{r, eval=F}
-m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | 0, io_ml)
+m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml)
+#summary(m1)
+
+save(m1,file="./results/io_m1.RData")
+```
+
+
+# {-}
+
+# probe interaction {.tabset .tabset-fade}
+
+Quick 'n dirty: subset data by gender and perform separate analyses. With I&O data.
+
+```{r, eval=F}
+io_ml
+
+
+m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml)
+#summary(m1)
+
 save(m1,file="./results/io_m1.RData")
 ```
 
@@ -140,4 +162,3 @@ knitr::kable(res, digits=3, "html",  caption="Conditional logit model: preferenc
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-# {-}

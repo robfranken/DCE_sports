@@ -1,5 +1,5 @@
 ---
-title: "ABS data"
+title: "Data preparation"
 bibliography: references.bib
 date: "Last compiled on `r format(Sys.time(), '%B, %Y')`"
 output: 
@@ -36,7 +36,9 @@ klippy::klippy(position = c('top', 'right'))
 
 To copy the code, click the button in the upper right corner of the code-chunks.
 
-# clean up
+# Getting started
+
+## clean up
 
 ```{r, results='hide'}
 rm(list=ls())
@@ -45,7 +47,7 @@ gc()
 
 <br>
 
-# general custom functions
+## general custom functions
 
 - `fpackage.check`: Check if packages are installed (and install if not) in R ([source](https://vbaliga.github.io/verify-that-r-packages-are-installed-and-loaded/))
 - `fsave`: Function to save data with time stamp in correct directory
@@ -79,34 +81,50 @@ fload  <- function(fileName){
 
 <br>
 
-# necessary packages
+## necessary packages
 
-- `tidyverse`
-- `mlogit`
+- `tidyverse`: data wrangling
+- `mlogit`: construct dataframe for multinomial logit model
+- `haven`: read and write various data formats
+- `sjlabelled`: work with labelled (SPSS) data
 
 ```{r, eval=FALSE}
-packages = c("tidyverse", "mlogit")
+packages = c("tidyverse", "mlogit", "haven", "sjlabelled")
 fpackage.check(packages)
 ```
 
 <br>
 
-# load in raw data
+---
 
-I load in raw, non-public data of the second wave of the survey project *Sports & Networks* [Franken et al., -@data2022]. This wave contains the DCE data. The data were deposited in [DANS EASY](link), but are not publicly accessible. 
+# Sports & Friendships
+
+## load in raw data
+
+I load in raw, non-public data of the second wave of the survey project *Sports & Friendships* [Franken et al., -@data2022]. This wave contains the DCE data. The data were deposited in [DANS EASY](link).
 
 ```{r,eval=F}
-df <- read.csv("./rawdata/results-survey868275.csv")
+data1 <- read.csv("./rawdata/results-survey938243.csv")
+data2 <- read.csv("./rawdata/results-survey868275.csv")
 ```
 
 <br>
 
-# data wrangling
+## data wrangling
 
 ```{r,eval=F}
+#copy data2 with dce data
+df <- data2
+
 # first, delete fake response;
 fakeid <- which(df$email  %in% "rob.franken@ru.nl")
 df <- df[-fakeid,]
+
+# match covariates of w1 (here, gender)
+data1$gender <- data1$A1
+covars <- data1[,c("gender", "email")]
+
+df <- merge(df,covars,by="email")
 
 # add id 
 df$id <- 1:nrow(df)
@@ -140,12 +158,10 @@ chosen <- c("CS1", "CS2", "CS3")
 
 
 for (set in 1:3) {
-
     # to long format
     
   for (choice in 1:3) {
 
-  
         data <- as.data.frame(df)
         data$set <- set
         data$options <- choice
@@ -154,7 +170,7 @@ for (set in 1:3) {
         data$gezellig <- data[, names(data) == gezelliglist[[set]][choice]]
         data$esteem <- data[, names(data) == esteemlist[[set]][choice]]
         data$chosen <- data[, names(data) == chosen[set]]
-        data <- data[, names(data) %in% c("id", "set", "options", "prestatie", "kennis", "gezellig",
+        data <- data[, names(data) %in% c("id", "gender", "set", "options", "prestatie", "kennis", "gezellig",
             "esteem", "chosen")]
         if (set == 1 & choice == 1) {
             df_long <- data
@@ -171,11 +187,11 @@ df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
 df_long$choice <- (df_long$chosen == c("Persoon 1", "Persoon 2", "Persoon 3")[df_long$options])
 ```
 
-<!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) --->
+<!-- @RF: to-do, match other ego-level covariates for descriptive statistics and moderational analyses (sports history, age, ...) --->
 
 <br>
 
-# make ready for mlogit
+## make ready for mlogit
 
 ```{r, eval=F}
 # first we need an id_alt (identification of alternatives), thus specific combi of facets
@@ -208,7 +224,7 @@ df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_c
 
 <br>
 
-# save data object
+## save data object
 ```{r, eval=F}
 fsave(df_ml, "abs_ml.RData")
 ```
@@ -216,6 +232,170 @@ fsave(df_ml, "abs_ml.RData")
 
 ---
 
-## References
+# I&O Panel
+
+clean environment, but keep save/load functions
+
+```{r, eval=F}
+rm(list=setdiff(ls(), c("fload","fsave")))
+```
+
+<br>
+
+## load in data
+
+Load in data of the I&O panel. Unlabel the data.
+
+```{r, eval=F}
+haven::read_sav("./rawdata/DRADTRIAL22_totaal.sav") %>%
+  sjlabelled::unlabel(.,verbose=F) -> df
+```
+
+<br> 
+
+## data wrangling
+
+```{r, eval=F}
+#add id
+df$id <- 1:nrow(df)
+
+#in case we want to merge this with the ABS-data:
+df$id <- df$id + 93
+
+#match covariates, here only gender (ref=male)
+df$female <- df$GESLACHT2 - 1
+#X to NA
+df$female <- ifelse(df$female>1, NA, df$female)
+
+
+# to long format
+
+# each list element contains the choices for each set. thus presatielist[[2]][3] is the
+# 'presatie'-attribute of person 3, in choice set 2
+
+
+prestatielist <- list()
+prestatielist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Prestaties", "LoopKeuzesets_1_LoopAlternatieven_2_Prestaties", "LoopKeuzesets_1_LoopAlternatieven_3_Prestaties")
+prestatielist[[2]] <- c("LoopKeuzesets_2_LoopAlternatieven_1_Prestaties", "LoopKeuzesets_2_LoopAlternatieven_2_Prestaties", "LoopKeuzesets_2_LoopAlternatieven_3_Prestaties")
+prestatielist[[3]] <- c("LoopKeuzesets_3_LoopAlternatieven_1_Prestaties", "LoopKeuzesets_3_LoopAlternatieven_2_Prestaties", "LoopKeuzesets_3_LoopAlternatieven_3_Prestaties")
+
+kennislist <- list()
+kennislist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Kennis", "LoopKeuzesets_1_LoopAlternatieven_2_Kennis", "LoopKeuzesets_1_LoopAlternatieven_3_Kennis")
+kennislist[[2]] <- c("LoopKeuzesets_2_LoopAlternatieven_1_Kennis", "LoopKeuzesets_2_LoopAlternatieven_2_Kennis", "LoopKeuzesets_2_LoopAlternatieven_3_Kennis")
+kennislist[[3]] <- c("LoopKeuzesets_3_LoopAlternatieven_1_Kennis", "LoopKeuzesets_3_LoopAlternatieven_2_Kennis", "LoopKeuzesets_3_LoopAlternatieven_3_Kennis")
+
+gezelliglist <- list()
+gezelliglist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Gezellig", "LoopKeuzesets_1_LoopAlternatieven_2_Gezellig", "LoopKeuzesets_1_LoopAlternatieven_3_Gezellig")
+gezelliglist[[2]] <- c("LoopKeuzesets_2_LoopAlternatieven_1_Gezellig", "LoopKeuzesets_2_LoopAlternatieven_2_Gezellig", "LoopKeuzesets_2_LoopAlternatieven_3_Gezellig")
+gezelliglist[[3]] <- c("LoopKeuzesets_3_LoopAlternatieven_1_Gezellig", "LoopKeuzesets_3_LoopAlternatieven_2_Gezellig", "LoopKeuzesets_3_LoopAlternatieven_3_Gezellig")
+
+
+esteemlist <- list()
+esteemlist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Aanmoediging", "LoopKeuzesets_1_LoopAlternatieven_2_Aanmoediging", "LoopKeuzesets_1_LoopAlternatieven_3_Aanmoediging")
+esteemlist[[2]] <- c("LoopKeuzesets_2_LoopAlternatieven_1_Aanmoediging", "LoopKeuzesets_2_LoopAlternatieven_2_Aanmoediging", "LoopKeuzesets_2_LoopAlternatieven_3_Aanmoediging")
+esteemlist[[3]] <- c("LoopKeuzesets_3_LoopAlternatieven_1_Aanmoediging", "LoopKeuzesets_3_LoopAlternatieven_2_Aanmoediging", "LoopKeuzesets_3_LoopAlternatieven_3_Aanmoediging")
+
+chosen <- c("V84_LoopKeuzesets_1", "V85_LoopKeuzesets_2", "V86_LoopKeuzesets_3")
+
+
+for (set in 1:3) {
+
+    # to long format
+    
+  for (choice in 1:3) {
+    
+        data <- as.data.frame(df)
+        data$set <- set
+        data$options <- choice
+        data$prestatie <- data[, names(data) == prestatielist[[set]][choice]]
+        data$kennis <- data[, names(data) == kennislist[[set]][choice]]
+        data$gezellig <- data[, names(data) == gezelliglist[[set]][choice]]
+        data$esteem <- data[, names(data) == esteemlist[[set]][choice]]
+        data$chosen <- data[, names(data) == chosen[set]]
+        data <- data[, names(data) %in% c("id", "female", "set", "options", "prestatie", "kennis", "gezellig",
+            "esteem", "chosen")]
+        if (set == 1 & choice == 1) {
+            df_long <- data
+        } else {
+            df_long <- rbind(df_long, data)
+        }
+    }
+}
+
+# order
+df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
+
+# define the choice
+df_long$choice <- (df_long$chosen == c(1, 2, 3)[df_long$options])
+
+
+#recode number into answer
+df_long$prestatie <- ifelse(df_long$prestatie == 1, "vindt het erg leuk om sport-prestaties te vergelijken",
+                             ifelse(df_long$prestatie == 2, "vindt het enigszins leuk om sport-prestaties te vergelijken",
+                             ifelse(df_long$prestatie == 3, "vindt het niet leuk om sport-prestaties te vergelijken", NA)))
+
+df_long$kennis <- ifelse(df_long$kennis == 1, "weet meer dan jij van effectieve trainingen en de juiste techniek",
+                             ifelse(df_long$kennis == 2, "weet evenveel als jij van effectieve trainingen en de juiste techniek",
+                             ifelse(df_long$kennis == 3, "weet minder dan jij van effectieve trainingen en de juiste techniek", NA)))
+
+df_long$gezellig <- ifelse(df_long$gezellig == 1, "sport voor de gezelligheid",
+                             ifelse(df_long$gezellig == 2, "wil een combi van gezellig en serieus sporten",
+                             ifelse(df_long$gezellig == 3, "	wil voornamelijk serieus sporten", NA)))
+
+df_long$esteem <- ifelse(df_long$esteem == 1, "moedigt je vaak aan",
+                             ifelse(df_long$esteem == 2, "moedigt je soms aan",
+                             ifelse(df_long$esteem == 3, "moedigt je nooit aan", NA)))
+
+```
+
+<!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) 
+perhaps i need to use wave 1...
+--->
+
+
+<br>
+
+## make ready for mlogit
+
+```{r, eval=F}
+# first we need an id_alt (identification of alternatives), thus specific combi of facets
+{
+    df_long$id_alt <- as.numeric(as.factor(trimws(df_long$prestatie))) * 1000 + as.numeric(as.factor(trimws(df_long$kennis))) *
+        100 + as.numeric(as.factor(trimws(df_long$gezellig))) * 10 + as.numeric(as.factor(trimws(df_long$esteem)))
+
+}
+
+# we also need an id for each specific choice set, thus combi of respnr and set
+df_long$id_choice <- df_long$id * 10 + df_long$set
+
+length(unique(df_long$id))
+length(unique(df_long$id_choice))
+sum(df_long$choice)#no missings on choice. !be aware these need to be deleted for mlogit. 
+
+# need to delete id_choice where no choice is made
+
+# do we have duplicates?
+df_long %>%
+    select(c("id_choice", "id_alt")) -> df_sel
+dups <- duplicated(df_sel)
+sum(dups)
+
+# and with no duplicates and no choice sets without choices, this should work 
+df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt",
+    shape = "long")
+```
+
+<br>
+
+## save data object
+```{r, eval=F}
+fsave(df_ml, "io_ml.RData")
+```
+
+<br>
+
+----
+
+### References
 
 

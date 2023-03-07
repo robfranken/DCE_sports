@@ -1,4 +1,4 @@
-name: "Choosing your sports partners!"
+name: "Replication website"
 author: "Rob Franken"
 date: "Last compiled on `r format(Systime(), '%B, %Y')"
 output_dir: "docs"
@@ -10,18 +10,21 @@ exclude:
 
 bibliography: references.bib
 navbar:
-  left:
-    - icon: fa-home
-      href: index.html
-    - text: "Preparation"
-      menu:
-        - text: "ABS"
-          href: prep.html
-        - text: "I&O"
-          href: prep2.html
-    - text: "Analyses"
-      href: analyse.html
   
+  left:
+    - icon: fa-info
+      text: "About"
+      href: index.html
+    - icon: far fa-file-code  
+      text: "Preparation"
+      href: prep.html
+    - icon: fa fa-bar-chart
+      text: "Analyses"
+      menu:
+      - text: "1. Descriptives"
+#        href: des.html
+      - text: "2. Models"
+        href: analyse.html
   right:
     - icon: fab fa-github
       href: https://github.com/robfranken/DCE_sports
