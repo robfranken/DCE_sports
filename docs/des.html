@@ -1,0 +1,780 @@
+<!DOCTYPE html>
+
+<html>
+
+<head>
+
+<meta charset="utf-8" />
+<meta name="generator" content="pandoc" />
+<meta http-equiv="X-UA-Compatible" content="IE=EDGE" />
+
+
+
+
+<title>Descriptives</title>
+
+<script src="site_libs/header-attrs-2.16/header-attrs.js"></script>
+<script src="site_libs/jquery-3.6.0/jquery-3.6.0.min.js"></script>
+<meta name="viewport" content="width=device-width, initial-scale=1" />
+<link href="site_libs/bootstrap-3.3.5/css/flatly.min.css" rel="stylesheet" />
+<script src="site_libs/bootstrap-3.3.5/js/bootstrap.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/html5shiv.min.js"></script>
+<script src="site_libs/bootstrap-3.3.5/shim/respond.min.js"></script>
+<style>h1 {font-size: 34px;}
+       h1.title {font-size: 38px;}
+       h2 {font-size: 30px;}
+       h3 {font-size: 24px;}
+       h4 {font-size: 18px;}
+       h5 {font-size: 16px;}
+       h6 {font-size: 12px;}
+       code {color: inherit; background-color: rgba(0, 0, 0, 0.04);}
+       pre:not([class]) { background-color: white }</style>
+<script src="site_libs/jqueryui-1.11.4/jquery-ui.min.js"></script>
+<link href="site_libs/tocify-1.9.1/jquery.tocify.css" rel="stylesheet" />
+<script src="site_libs/tocify-1.9.1/jquery.tocify.js"></script>
+<script src="site_libs/navigation-1.1/tabsets.js"></script>
+<script src="site_libs/navigation-1.1/codefolding.js"></script>
+<script src="site_libs/navigation-1.1/sourceembed.js"></script>
+<link href="site_libs/highlightjs-9.12.0/default.css" rel="stylesheet" />
+<script src="site_libs/highlightjs-9.12.0/highlight.js"></script>
+<script src="site_libs/clipboard-1.7.1/clipboard.min.js"></script>
+<link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
+<link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
+<script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
+<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
+<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
+<link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
+
+<style type="text/css">
+  code{white-space: pre-wrap;}
+  span.smallcaps{font-variant: small-caps;}
+  span.underline{text-decoration: underline;}
+  div.column{display: inline-block; vertical-align: top; width: 50%;}
+  div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+  ul.task-list{list-style: none;}
+    </style>
+
+<style type="text/css">code{white-space: pre;}</style>
+<script type="text/javascript">
+if (window.hljs) {
+  hljs.configure({languages: []});
+  hljs.initHighlightingOnLoad();
+  if (document.readyState && document.readyState === "complete") {
+    window.setTimeout(function() { hljs.initHighlighting(); }, 0);
+  }
+}
+</script>
+
+
+
+
+<style type="text/css">
+#rmd-source-code {
+  display: none;
+}
+</style>
+
+
+<link rel="stylesheet" href="tweaks.css" type="text/css" />
+
+
+
+<style type = "text/css">
+.main-container {
+  max-width: 940px;
+  margin-left: auto;
+  margin-right: auto;
+}
+img {
+  max-width:100%;
+}
+.tabbed-pane {
+  padding-top: 12px;
+}
+.html-widget {
+  margin-bottom: 20px;
+}
+button.code-folding-btn:focus {
+  outline: none;
+}
+summary {
+  display: list-item;
+}
+details > summary > p:only-child {
+  display: inline;
+}
+pre code {
+  padding: 0;
+}
+</style>
+
+
+<style type="text/css">
+.dropdown-submenu {
+  position: relative;
+}
+.dropdown-submenu>.dropdown-menu {
+  top: 0;
+  left: 100%;
+  margin-top: -6px;
+  margin-left: -1px;
+  border-radius: 0 6px 6px 6px;
+}
+.dropdown-submenu:hover>.dropdown-menu {
+  display: block;
+}
+.dropdown-submenu>a:after {
+  display: block;
+  content: " ";
+  float: right;
+  width: 0;
+  height: 0;
+  border-color: transparent;
+  border-style: solid;
+  border-width: 5px 0 5px 5px;
+  border-left-color: #cccccc;
+  margin-top: 5px;
+  margin-right: -10px;
+}
+.dropdown-submenu:hover>a:after {
+  border-left-color: #adb5bd;
+}
+.dropdown-submenu.pull-left {
+  float: none;
+}
+.dropdown-submenu.pull-left>.dropdown-menu {
+  left: -100%;
+  margin-left: 10px;
+  border-radius: 6px 0 6px 6px;
+}
+</style>
+
+<script type="text/javascript">
+// manage active state of menu based on current page
+$(document).ready(function () {
+  // active menu anchor
+  href = window.location.pathname
+  href = href.substr(href.lastIndexOf('/') + 1)
+  if (href === "")
+    href = "index.html";
+  var menuAnchor = $('a[href="' + href + '"]');
+
+  // mark the anchor link active (and if it's in a dropdown, also mark that active)
+  var dropdown = menuAnchor.closest('li.dropdown');
+  if (window.bootstrap) { // Bootstrap 4+
+    menuAnchor.addClass('active');
+    dropdown.find('> .dropdown-toggle').addClass('active');
+  } else { // Bootstrap 3
+    menuAnchor.parent().addClass('active');
+    dropdown.addClass('active');
+  }
+
+  // Navbar adjustments
+  var navHeight = $(".navbar").first().height() + 15;
+  var style = document.createElement('style');
+  var pt = "padding-top: " + navHeight + "px; ";
+  var mt = "margin-top: -" + navHeight + "px; ";
+  var css = "";
+  // offset scroll position for anchor links (for fixed navbar)
+  for (var i = 1; i <= 6; i++) {
+    css += ".section h" + i + "{ " + pt + mt + "}\n";
+  }
+  style.innerHTML = "body {" + pt + "padding-bottom: 40px; }\n" + css;
+  document.head.appendChild(style);
+});
+</script>
+
+<!-- tabsets -->
+
+<style type="text/css">
+.tabset-dropdown > .nav-tabs {
+  display: inline-table;
+  max-height: 500px;
+  min-height: 44px;
+  overflow-y: auto;
+  border: 1px solid #ddd;
+  border-radius: 4px;
+}
+
+.tabset-dropdown > .nav-tabs > li.active:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li.active:before {
+  content: "&#xe258;";
+  border: none;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open:before {
+  content: "";
+  font-family: 'Glyphicons Halflings';
+  display: inline-block;
+  padding: 10px;
+  border-right: 1px solid #ddd;
+}
+
+.tabset-dropdown > .nav-tabs > li.active {
+  display: block;
+}
+
+.tabset-dropdown > .nav-tabs > li > a,
+.tabset-dropdown > .nav-tabs > li > a:focus,
+.tabset-dropdown > .nav-tabs > li > a:hover {
+  border: none;
+  display: inline-block;
+  border-radius: 4px;
+  background-color: transparent;
+}
+
+.tabset-dropdown > .nav-tabs.nav-tabs-open > li {
+  display: block;
+  float: none;
+}
+
+.tabset-dropdown > .nav-tabs > li {
+  display: none;
+}
+</style>
+
+<!-- code folding -->
+<style type="text/css">
+.code-folding-btn { margin-bottom: 4px; }
+</style>
+
+
+
+<style type="text/css">
+
+#TOC {
+  margin: 25px 0px 20px 0px;
+}
+@media (max-width: 768px) {
+#TOC {
+  position: relative;
+  width: 100%;
+}
+}
+
+@media print {
+.toc-content {
+  /* see https://github.com/w3c/csswg-drafts/issues/4434 */
+  float: right;
+}
+}
+
+.toc-content {
+  padding-left: 30px;
+  padding-right: 40px;
+}
+
+div.main-container {
+  max-width: 1200px;
+}
+
+div.tocify {
+  width: 20%;
+  max-width: 260px;
+  max-height: 85%;
+}
+
+@media (min-width: 768px) and (max-width: 991px) {
+  div.tocify {
+    width: 25%;
+  }
+}
+
+@media (max-width: 767px) {
+  div.tocify {
+    width: 100%;
+    max-width: none;
+  }
+}
+
+.tocify ul, .tocify li {
+  line-height: 20px;
+}
+
+.tocify-subheader .tocify-item {
+  font-size: 0.90em;
+}
+
+.tocify .list-group-item {
+  border-radius: 0px;
+}
+
+
+</style>
+
+
+
+</head>
+
+<body>
+
+
+<div class="container-fluid main-container">
+
+
+<!-- setup 3col/9col grid for toc_float and main content  -->
+<div class="row">
+<div class="col-xs-12 col-sm-4 col-md-3">
+<div id="TOC" class="tocify">
+</div>
+</div>
+
+<div class="toc-content col-xs-12 col-sm-8 col-md-9">
+
+
+
+
+<div class="navbar navbar-default  navbar-fixed-top" role="navigation">
+  <div class="container">
+    <div class="navbar-header">
+      <button type="button" class="navbar-toggle collapsed" data-toggle="collapse" data-bs-toggle="collapse" data-target="#navbar" data-bs-target="#navbar">
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+        <span class="icon-bar"></span>
+      </button>
+      <a class="navbar-brand" href="index.html"></a>
+    </div>
+    <div id="navbar" class="navbar-collapse collapse">
+      <ul class="nav navbar-nav">
+        <li>
+  <a href="index.html">
+    <span class="fa fa-info"></span>
+     
+    About
+  </a>
+</li>
+<li>
+  <a href="prep.html">
+    <span class="far fa-file-code"></span>
+     
+    Preparation
+  </a>
+</li>
+<li class="dropdown">
+  <a href="#" class="dropdown-toggle" data-toggle="dropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+    <span class="fa fa-bar-chart"></span>
+     
+    Analyses
+     
+    <span class="caret"></span>
+  </a>
+  <ul class="dropdown-menu" role="menu">
+    <li>
+      <a href="des.html">1. Descriptives</a>
+    </li>
+    <li>
+      <a href="analyse.html">2. Models</a>
+    </li>
+  </ul>
+</li>
+      </ul>
+      <ul class="nav navbar-nav navbar-right">
+        
+      </ul>
+    </div><!--/.nav-collapse -->
+  </div><!--/.container -->
+</div><!--/.navbar -->
+
+<div id="header">
+
+<div class="btn-group pull-right float-right">
+<button type="button" class="btn btn-default btn-xs btn-secondary btn-sm dropdown-toggle" data-toggle="dropdown" data-bs-toggle="dropdown" aria-haspopup="true" aria-expanded="false"><span>Code</span> <span class="caret"></span></button>
+<ul class="dropdown-menu dropdown-menu-right" style="min-width: 50px;">
+<li><a id="rmd-show-all-code" href="#">Show All Code</a></li>
+<li><a id="rmd-hide-all-code" href="#">Hide All Code</a></li>
+<li role="separator" class="divider"></li>
+<li><a id="rmd-download-source" href="#">Download Rmd</a></li>
+</ul>
+</div>
+
+
+
+<h1 class="title toc-ignore">Descriptives</h1>
+<h4 class="date">Last compiled on maart, 2023</h4>
+
+</div>
+
+
+<script>
+  addClassKlippyTo("pre.r, pre.markdown");
+  addKlippy('right', 'top', 'auto', '1', 'Copy code', 'Copied!');
+</script>
+<hr />
+<p>To copy the code, click the button in the upper right corner of the
+code-chunks.</p>
+<div id="getting-started" class="section level1" number="1">
+<h1><span class="header-section-number">1</span> Getting started</h1>
+<div id="clean-up" class="section level2" number="1.1">
+<h2><span class="header-section-number">1.1</span> clean up</h2>
+<pre class="r test"><code>rm(list=ls())
+gc()</code></pre>
+<p><br></p>
+</div>
+<div id="general-custom-functions" class="section level2" number="1.2">
+<h2><span class="header-section-number">1.2</span> general custom
+functions</h2>
+<ul>
+<li><code>fpackage.check</code>: Check if packages are installed (and
+install if not) in R</li>
+<li><code>fsave</code>: Function to save data with time stamp in correct
+directory</li>
+<li><code>fload</code>: Function to load R-objects under new names</li>
+</ul>
+<pre class="r test"><code>fpackage.check &lt;- function(packages) {
+    lapply(packages, FUN = function(x) {
+        if (!require(x, character.only = TRUE)) {
+            install.packages(x, dependencies = TRUE)
+            library(x, character.only = TRUE)
+        }
+    })
+}
+
+fsave &lt;- function(x, file, location = &quot;./data/processed/&quot;, ...) {
+    if (!dir.exists(location))
+        dir.create(location)
+    datename &lt;- substr(gsub(&quot;[:-]&quot;, &quot;&quot;, Sys.time()), 1, 8)
+    totalname &lt;- paste(location, datename, file, sep = &quot;&quot;)
+    print(paste(&quot;SAVED: &quot;, totalname, sep = &quot;&quot;))
+    save(x, file = totalname)
+}
+
+
+fload  &lt;- function(fileName){
+  load(fileName)
+  get(ls()[ls() != &quot;fileName&quot;])
+}</code></pre>
+<p><br></p>
+</div>
+<div id="necessary-packages" class="section level2" number="1.3">
+<h2><span class="header-section-number">1.3</span> necessary
+packages</h2>
+<ul>
+<li><code>tidyverse</code>: data wrangling</li>
+<li><code>reshape2</code>: reshaping data</li>
+<li><code>mlogit</code>: construct dataframe for multinomial logit
+model</li>
+<li><code>haven</code>: read and write various data formats</li>
+<li><code>sjlabelled</code>: work with labelled (SPSS) data</li>
+<li><code>mclust</code>: latent (motivational) profile analysis</li>
+<li><code>Hmisc</code>: containing <code>rcorr()</code> funciton to
+create correlation matrix</li>
+<li><code>ggcorrplot</code>: visualize corelation matrix</li>
+<li><code>ggplot2</code></li>
+</ul>
+<pre class="r test"><code>packages = c(&quot;tidyverse&quot;, &quot;mlogit&quot;, &quot;haven&quot;, &quot;sjlabelled&quot;, &quot;mclust&quot;, &quot;Hmisc&quot;, &quot;ggcorrplot&quot;, &quot;reshape2&quot;, &quot;ggplot2&quot;)
+fpackage.check(packages)</code></pre>
+</div>
+</div>
+<div id="io-panel" class="section level1" number="2">
+<h1><span class="header-section-number">2</span> I&amp;O Panel</h1>
+<div id="load-in-data" class="section level2" number="2.1">
+<h2><span class="header-section-number">2.1</span> load in data</h2>
+<p>Load in data of the I&amp;O panel. Unlabel the data.</p>
+<pre class="r test"><code>haven::read_sav(&quot;./rawdata/DRADTRIAL22_totaal.sav&quot;) %&gt;%
+  sjlabelled::unlabel(.,verbose=F) -&gt; df</code></pre>
+<p><br></p>
+</div>
+<div id="motivations" class="section level2" number="2.2">
+<h2><span class="header-section-number">2.2</span> motivations</h2>
+<pre class="r test"><code>#subset motivation data
+mot &lt;- df %&gt;%
+  select(V10_1, V10_2, V10_3, V10_4, V10_5)
+#and add identifier
+mot$id &lt;- 1:nrow(mot)</code></pre>
+<p><br></p>
+<p>descriptives</p>
+<pre class="r test"><code>des &lt;- mot %&gt;%
+  select(-id) %&gt;%
+  gather(&quot;Variable&quot;, &quot;value&quot;) %&gt;%
+  group_by(Variable) %&gt;%
+  summarise(Mean=mean(value,na.rm=T),
+            SD=sd(value,na.rm=T),
+            min=min(value,na.rm=T),
+            max=max(value,na.rm=T))
+
+des$Variable &lt;- c(&quot;Fun&quot;, &quot;Health and fitness&quot;, &quot;Aesthetics&quot;, &quot;Performance and competition&quot;, &quot;Social interaction&quot;)
+
+options(knitr.kable.NA=&#39;&#39;)
+knitr::kable(des, digits=2, &quot;html&quot;) %&gt;%
+  kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;))</code></pre>
+<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
+<thead>
+<tr>
+<th style="text-align:left;">
+Variable
+</th>
+<th style="text-align:right;">
+Mean
+</th>
+<th style="text-align:right;">
+SD
+</th>
+<th style="text-align:right;">
+min
+</th>
+<th style="text-align:right;">
+max
+</th>
+</tr>
+</thead>
+<tbody>
+<tr>
+<td style="text-align:left;">
+Fun
+</td>
+<td style="text-align:right;">
+4.29
+</td>
+<td style="text-align:right;">
+0.71
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Health and fitness
+</td>
+<td style="text-align:right;">
+4.33
+</td>
+<td style="text-align:right;">
+0.59
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Aesthetics
+</td>
+<td style="text-align:right;">
+3.46
+</td>
+<td style="text-align:right;">
+0.99
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Performance and competition
+</td>
+<td style="text-align:right;">
+2.81
+</td>
+<td style="text-align:right;">
+1.07
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+<tr>
+<td style="text-align:left;">
+Social interaction
+</td>
+<td style="text-align:right;">
+3.25
+</td>
+<td style="text-align:right;">
+1.11
+</td>
+<td style="text-align:right;">
+1
+</td>
+<td style="text-align:right;">
+5
+</td>
+</tr>
+</tbody>
+</table>
+<pre class="r test"><code>#rm(des)</code></pre>
+<p><br></p>
+<p>correlation matrix</p>
+<pre class="r test"><code>tab &lt;- mot[complete.cases(mot),-6]
+names(tab) &lt;- c(&quot;Fun&quot;, &quot;Health and fitness&quot;, &quot;Aesthetics&quot;, &quot;Performance and competition&quot;, &quot;Social interaction&quot;)
+#Hmisc::rcorr(as.matrix(tab))
+
+#visualize
+ggcorrplot::ggcorrplot(cor(tab))</code></pre>
+<p><img src="des_files/figure-html/unnamed-chunk-7-1.png" width="672" /></p>
+<pre class="r test"><code>#rm(tab)</code></pre>
+</div>
+<div id="motivaitonal-clusters" class="section level2" number="2.3">
+<h2><span class="header-section-number">2.3</span> motivaitonal
+clusters?</h2>
+<p><code>Mclust</code> requires complete data. We standardize input
+variables, for reasons of interpretability.</p>
+<pre class="r test"><code>mot %&gt;%
+  na.omit() %&gt;% #listwise deletion
+  mutate(across(!id, scale)) -&gt; mot.nm #standardize indicators, expect id.</code></pre>
+<p><br></p>
+<p>Explore model fit by plotting BIC, ICL (optional: bootstrapped LRTS)
+with number of profiles (1-9)</p>
+<pre class="r test"><code>BIC &lt;- mclustBIC(mot.nm %&gt;% select(-id))
+ICL &lt;- mclustICL(mot.nm %&gt;% select(-id))
+#LRT &lt;- mclustBootstrapLRT(mot.nm %&gt;%select(-id), modelName = &quot;EEV&quot;)
+
+plot(BIC)
+plot(ICL)
+summary(BIC)
+summary(ICL)</code></pre>
+<pre class="r test"><code>m2 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=2, x=BIC)
+m3 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=3, x=BIC)
+m4 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=4, x=BIC)
+m5 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=5, x=BIC)
+m6 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=6, x=BIC)
+m7 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=7, x=BIC)
+m8 &lt;- Mclust(mot.nm %&gt;% select(-id), modelNames=&quot;EEV&quot;, G=8, x=BIC)</code></pre>
+<p><br></p>
+<p>plot results, to make solution more intuitive (if solution is
+theoretically meaningful, we should be able to interpret the different
+profiles).</p>
+<p>i use <code>reshape2</code> to extract subscale means [note: datw
+were transformed into standardized z-scores; thus profile means reflect
+SD-units above/below sample mean (which is 0)].</p>
+<pre class="r test"><code>data.frame(m4$parameters$mean,stringsAsFactors = F) %&gt;%
+  rownames_to_column() %&gt;%
+  rename(Motivation = rowname) %&gt;%
+  melt(id.vars = &quot;Motivation&quot;, variable.name = &quot;Profile&quot;, value.name = &quot;Mean&quot;) %&gt;%
+  mutate(Mean = round(Mean, 2),
+         Mean = ifelse(Mean&gt;1,1, Mean)#trim values exceeding +1SD
+         ) -&gt; means
+
+#give appropriate labels
+means$Motivation &lt;- ifelse(means$Motivation==&quot;V10_1&quot;, &quot;Fun&quot;, ifelse(means$Motivation==&quot;V10_2&quot;, &quot;Health &amp; Fitness&quot;, ifelse(means$Motivation==&quot;V10_3&quot;, &quot;Aesthetics&quot;, ifelse(means$Motivation==&quot;V10_4&quot;, &quot;Performance &amp; Competition&quot;, ifelse(means$Motivation==&quot;V10_5&quot;, &quot;Social interaction&quot;, NA)))))
+
+#plot
+means %&gt;% ggplot(aes(Motivation, Mean, group = Profile, color = Profile)) +
+  geom_line() + geom_point() +
+  labs(x=NULL, y=&quot;Standardized score&quot;) +
+  theme_bw(base_size=14) +
+  geom_hline(yintercept=0, linetype=&quot;dashed&quot;) +
+  theme(axis.text.x=element_text(angle=15, hjust=.8),legend.position = &quot;top&quot;)</code></pre>
+<div class="figure">
+<img src="images/lpa.png" alt="" />
+<p class="caption">Mclust solution for EEV, 5</p>
+</div>
+</div>
+</div>
+
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkRlc2NyaXB0aXZlcyINCmJpYmxpb2dyYXBoeTogcmVmZXJlbmNlcy5iaWINCmRhdGU6ICJMYXN0IGNvbXBpbGVkIG9uIGByIGZvcm1hdChTeXMudGltZSgpLCAnJUIsICVZJylgIg0Kb3V0cHV0OiANCiAgaHRtbF9kb2N1bWVudDoNCiAgICBjc3M6IHR3ZWFrcy5jc3MNCiAgICB0b2M6ICB0cnVlDQogICAgdG9jX2Zsb2F0OiB0cnVlDQogICAgbnVtYmVyX3NlY3Rpb25zOiB0cnVlDQogICAgdG9jX2RlcHRoOiAxDQogICAgY29kZV9mb2xkaW5nOiBzaG93DQogICAgY29kZV9kb3dubG9hZDogeWVzDQotLS0NCg0KYGBge3IsIGdsb2JhbHNldHRpbmdzLCBlY2hvPUZBTFNFLCB3YXJuaW5nPUZBTFNFLCByZXN1bHRzPSdoaWRlJywgbWVzc2FnZT1GQUxTRX0NCmxpYnJhcnkoa25pdHIpDQpsaWJyYXJ5KHRpZHl2ZXJzZSkNCmtuaXRyOjpvcHRzX2NodW5rJHNldChlY2hvID0gVFJVRSkNCm9wdHNfY2h1bmskc2V0KHRpZHkub3B0cz1saXN0KHdpZHRoLmN1dG9mZj0xMDApLHRpZHk9VFJVRSwgd2FybmluZyA9IEZBTFNFLCBtZXNzYWdlID0gRkFMU0UsY29tbWVudCA9ICIjPiIsIGNhY2hlPVRSVUUsIGNsYXNzLnNvdXJjZT1jKCJ0ZXN0IiksIGNsYXNzLm91dHB1dD1jKCJ0ZXN0MyIpKQ0Kb3B0aW9ucyh3aWR0aCA9IDEwMCkNCnJnbDo6c2V0dXBLbml0cigpDQoNCmNvbG9yaXplIDwtIGZ1bmN0aW9uKHgsIGNvbG9yKSB7c3ByaW50ZigiPHNwYW4gc3R5bGU9J2NvbG9yOiAlczsnPiVzPC9zcGFuPiIsIGNvbG9yLCB4KSB9DQpgYGANCg0KDQpgYGB7ciBrbGlwcHksIGVjaG89RkFMU0UsIGluY2x1ZGU9VFJVRX0NCmtsaXBweTo6a2xpcHB5KHBvc2l0aW9uID0gYygndG9wJywgJ3JpZ2h0JykpDQoja2xpcHB5OjprbGlwcHkoY29sb3IgPSAnZGFya3JlZCcpDQoja2xpcHB5OjprbGlwcHkodG9vbHRpcF9tZXNzYWdlID0gJ0NsaWNrIHRvIGNvcHknLCB0b29sdGlwX3N1Y2Nlc3MgPSAnRG9uZScpDQpgYGANCg0KDQotLS0gIA0KDQoNClRvIGNvcHkgdGhlIGNvZGUsIGNsaWNrIHRoZSBidXR0b24gaW4gdGhlIHVwcGVyIHJpZ2h0IGNvcm5lciBvZiB0aGUgY29kZS1jaHVua3MuDQoNCiMgR2V0dGluZyBzdGFydGVkDQoNCiMjIGNsZWFuIHVwDQoNCmBgYHtyLCByZXN1bHRzPSdoaWRlJ30NCnJtKGxpc3Q9bHMoKSkNCmdjKCkNCmBgYA0KDQo8YnI+DQoNCiMjIGdlbmVyYWwgY3VzdG9tIGZ1bmN0aW9ucw0KDQotIGBmcGFja2FnZS5jaGVja2A6IENoZWNrIGlmIHBhY2thZ2VzIGFyZSBpbnN0YWxsZWQgKGFuZCBpbnN0YWxsIGlmIG5vdCkgaW4gUg0KLSBgZnNhdmVgOiBGdW5jdGlvbiB0byBzYXZlIGRhdGEgd2l0aCB0aW1lIHN0YW1wIGluIGNvcnJlY3QgZGlyZWN0b3J5DQotIGBmbG9hZGA6IEZ1bmN0aW9uIHRvIGxvYWQgUi1vYmplY3RzIHVuZGVyIG5ldyBuYW1lcw0KDQpgYGB7ciwgZXZhbD1GQUxTRX0NCmZwYWNrYWdlLmNoZWNrIDwtIGZ1bmN0aW9uKHBhY2thZ2VzKSB7DQogICAgbGFwcGx5KHBhY2thZ2VzLCBGVU4gPSBmdW5jdGlvbih4KSB7DQogICAgICAgIGlmICghcmVxdWlyZSh4LCBjaGFyYWN0ZXIub25seSA9IFRSVUUpKSB7DQogICAgICAgICAgICBpbnN0YWxsLnBhY2thZ2VzKHgsIGRlcGVuZGVuY2llcyA9IFRSVUUpDQogICAgICAgICAgICBsaWJyYXJ5KHgsIGNoYXJhY3Rlci5vbmx5ID0gVFJVRSkNCiAgICAgICAgfQ0KICAgIH0pDQp9DQoNCmZzYXZlIDwtIGZ1bmN0aW9uKHgsIGZpbGUsIGxvY2F0aW9uID0gIi4vZGF0YS9wcm9jZXNzZWQvIiwgLi4uKSB7DQogICAgaWYgKCFkaXIuZXhpc3RzKGxvY2F0aW9uKSkNCiAgICAgICAgZGlyLmNyZWF0ZShsb2NhdGlvbikNCiAgICBkYXRlbmFtZSA8LSBzdWJzdHIoZ3N1YigiWzotXSIsICIiLCBTeXMudGltZSgpKSwgMSwgOCkNCiAgICB0b3RhbG5hbWUgPC0gcGFzdGUobG9jYXRpb24sIGRhdGVuYW1lLCBmaWxlLCBzZXAgPSAiIikNCiAgICBwcmludChwYXN0ZSgiU0FWRUQ6ICIsIHRvdGFsbmFtZSwgc2VwID0gIiIpKQ0KICAgIHNhdmUoeCwgZmlsZSA9IHRvdGFsbmFtZSkNCn0NCg0KDQpmbG9hZCAgPC0gZnVuY3Rpb24oZmlsZU5hbWUpew0KICBsb2FkKGZpbGVOYW1lKQ0KICBnZXQobHMoKVtscygpICE9ICJmaWxlTmFtZSJdKQ0KfQ0KYGBgDQoNCjxicj4NCg0KIyMgbmVjZXNzYXJ5IHBhY2thZ2VzDQoNCi0gYHRpZHl2ZXJzZWA6IGRhdGEgd3JhbmdsaW5nDQotIGByZXNoYXBlMmA6IHJlc2hhcGluZyBkYXRhDQotIGBtbG9naXRgOiBjb25zdHJ1Y3QgZGF0YWZyYW1lIGZvciBtdWx0aW5vbWlhbCBsb2dpdCBtb2RlbA0KLSBgaGF2ZW5gOiByZWFkIGFuZCB3cml0ZSB2YXJpb3VzIGRhdGEgZm9ybWF0cw0KLSBgc2psYWJlbGxlZGA6IHdvcmsgd2l0aCBsYWJlbGxlZCAoU1BTUykgZGF0YQ0KLSBgbWNsdXN0YDogbGF0ZW50IChtb3RpdmF0aW9uYWwpIHByb2ZpbGUgYW5hbHlzaXMNCi0gYEhtaXNjYDogY29udGFpbmluZyBgcmNvcnIoKWAgZnVuY2l0b24gdG8gY3JlYXRlIGNvcnJlbGF0aW9uIG1hdHJpeA0KLSBgZ2djb3JycGxvdGA6IHZpc3VhbGl6ZSBjb3JlbGF0aW9uIG1hdHJpeA0KLSBgZ2dwbG90MmANCg0KYGBge3IsIGV2YWw9RkFMU0V9DQpwYWNrYWdlcyA9IGMoInRpZHl2ZXJzZSIsICJtbG9naXQiLCAiaGF2ZW4iLCAic2psYWJlbGxlZCIsICJtY2x1c3QiLCAiSG1pc2MiLCAiZ2djb3JycGxvdCIsICJyZXNoYXBlMiIsICJnZ3Bsb3QyIikNCmZwYWNrYWdlLmNoZWNrKHBhY2thZ2VzKQ0KYGBgDQoNCg0KIyBJJk8gUGFuZWwNCg0KIyMgbG9hZCBpbiBkYXRhDQoNCkxvYWQgaW4gZGF0YSBvZiB0aGUgSSZPIHBhbmVsLiBVbmxhYmVsIHRoZSBkYXRhLg0KDQpgYGB7cn0NCmhhdmVuOjpyZWFkX3NhdigiLi9yYXdkYXRhL0RSQURUUklBTDIyX3RvdGFhbC5zYXYiKSAlPiUNCiAgc2psYWJlbGxlZDo6dW5sYWJlbCguLHZlcmJvc2U9RikgLT4gZGYNCmBgYA0KDQo8YnI+IA0KDQoNCiMjIG1vdGl2YXRpb25zDQoNCg0KYGBge3J9DQojc3Vic2V0IG1vdGl2YXRpb24gZGF0YQ0KbW90IDwtIGRmICU+JQ0KICBzZWxlY3QoVjEwXzEsIFYxMF8yLCBWMTBfMywgVjEwXzQsIFYxMF81KQ0KI2FuZCBhZGQgaWRlbnRpZmllcg0KbW90JGlkIDwtIDE6bnJvdyhtb3QpDQpgYGANCg0KDQo8YnI+DQoNCmRlc2NyaXB0aXZlcw0KDQpgYGB7cn0NCmRlcyA8LSBtb3QgJT4lDQogIHNlbGVjdCgtaWQpICU+JQ0KICBnYXRoZXIoIlZhcmlhYmxlIiwgInZhbHVlIikgJT4lDQogIGdyb3VwX2J5KFZhcmlhYmxlKSAlPiUNCiAgc3VtbWFyaXNlKE1lYW49bWVhbih2YWx1ZSxuYS5ybT1UKSwNCiAgICAgICAgICAgIFNEPXNkKHZhbHVlLG5hLnJtPVQpLA0KICAgICAgICAgICAgbWluPW1pbih2YWx1ZSxuYS5ybT1UKSwNCiAgICAgICAgICAgIG1heD1tYXgodmFsdWUsbmEucm09VCkpDQoNCmRlcyRWYXJpYWJsZSA8LSBjKCJGdW4iLCAiSGVhbHRoIGFuZCBmaXRuZXNzIiwgIkFlc3RoZXRpY3MiLCAiUGVyZm9ybWFuY2UgYW5kIGNvbXBldGl0aW9uIiwgIlNvY2lhbCBpbnRlcmFjdGlvbiIpDQoNCm9wdGlvbnMoa25pdHIua2FibGUuTkE9JycpDQprbml0cjo6a2FibGUoZGVzLCBkaWdpdHM9MiwgImh0bWwiKSAlPiUNCiAga2FibGVFeHRyYTo6a2FibGVfc3R5bGluZyhib290c3RyYXBfb3B0aW9ucyA9IGMoInN0cmlwZWQiLCAiaG92ZXIiKSkNCg0KI3JtKGRlcykNCmBgYA0KDQo8YnI+DQoNCmNvcnJlbGF0aW9uIG1hdHJpeA0KDQpgYGB7cn0NCnRhYiA8LSBtb3RbY29tcGxldGUuY2FzZXMobW90KSwtNl0NCm5hbWVzKHRhYikgPC0gYygiRnVuIiwgIkhlYWx0aCBhbmQgZml0bmVzcyIsICJBZXN0aGV0aWNzIiwgIlBlcmZvcm1hbmNlIGFuZCBjb21wZXRpdGlvbiIsICJTb2NpYWwgaW50ZXJhY3Rpb24iKQ0KI0htaXNjOjpyY29ycihhcy5tYXRyaXgodGFiKSkNCg0KI3Zpc3VhbGl6ZQ0KZ2djb3JycGxvdDo6Z2djb3JycGxvdChjb3IodGFiKSkNCiNybSh0YWIpDQpgYGANCg0KDQojIyBtb3RpdmFpdG9uYWwgY2x1c3RlcnM/DQoNCmBNY2x1c3RgIHJlcXVpcmVzIGNvbXBsZXRlIGRhdGEuIFdlIHN0YW5kYXJkaXplIGlucHV0IHZhcmlhYmxlcywgZm9yIHJlYXNvbnMgb2YgaW50ZXJwcmV0YWJpbGl0eS4NCg0KYGBge3IsIGV2YWw9Rn0NCm1vdCAlPiUNCiAgbmEub21pdCgpICU+JSAjbGlzdHdpc2UgZGVsZXRpb24NCiAgbXV0YXRlKGFjcm9zcyghaWQsIHNjYWxlKSkgLT4gbW90Lm5tICNzdGFuZGFyZGl6ZSBpbmRpY2F0b3JzLCBleHBlY3QgaWQuDQpgYGANCg0KPGJyPg0KDQpFeHBsb3JlIG1vZGVsIGZpdCBieSBwbG90dGluZyBCSUMsIElDTCAob3B0aW9uYWw6IGJvb3RzdHJhcHBlZCBMUlRTKSB3aXRoIG51bWJlciBvZiBwcm9maWxlcyAoMS05KQ0KDQpgYGB7ciwgZXZhbD1GfQ0KQklDIDwtIG1jbHVzdEJJQyhtb3Qubm0gJT4lIHNlbGVjdCgtaWQpKQ0KSUNMIDwtIG1jbHVzdElDTChtb3Qubm0gJT4lIHNlbGVjdCgtaWQpKQ0KI0xSVCA8LSBtY2x1c3RCb290c3RyYXBMUlQobW90Lm5tICU+JXNlbGVjdCgtaWQpLCBtb2RlbE5hbWUgPSAiRUVWIikNCg0KcGxvdChCSUMpDQpwbG90KElDTCkNCnN1bW1hcnkoQklDKQ0Kc3VtbWFyeShJQ0wpDQpgYGANCg0KYGBge3IsIGV2YWw9Rn0NCm0yIDwtIE1jbHVzdChtb3Qubm0gJT4lIHNlbGVjdCgtaWQpLCBtb2RlbE5hbWVzPSJFRVYiLCBHPTIsIHg9QklDKQ0KbTMgPC0gTWNsdXN0KG1vdC5ubSAlPiUgc2VsZWN0KC1pZCksIG1vZGVsTmFtZXM9IkVFViIsIEc9MywgeD1CSUMpDQptNCA8LSBNY2x1c3QobW90Lm5tICU+JSBzZWxlY3QoLWlkKSwgbW9kZWxOYW1lcz0iRUVWIiwgRz00LCB4PUJJQykNCm01IDwtIE1jbHVzdChtb3Qubm0gJT4lIHNlbGVjdCgtaWQpLCBtb2RlbE5hbWVzPSJFRVYiLCBHPTUsIHg9QklDKQ0KbTYgPC0gTWNsdXN0KG1vdC5ubSAlPiUgc2VsZWN0KC1pZCksIG1vZGVsTmFtZXM9IkVFViIsIEc9NiwgeD1CSUMpDQptNyA8LSBNY2x1c3QobW90Lm5tICU+JSBzZWxlY3QoLWlkKSwgbW9kZWxOYW1lcz0iRUVWIiwgRz03LCB4PUJJQykNCm04IDwtIE1jbHVzdChtb3Qubm0gJT4lIHNlbGVjdCgtaWQpLCBtb2RlbE5hbWVzPSJFRVYiLCBHPTgsIHg9QklDKQ0KYGBgDQoNCjxicj4NCg0KcGxvdCByZXN1bHRzLCB0byBtYWtlIHNvbHV0aW9uIG1vcmUgaW50dWl0aXZlIChpZiBzb2x1dGlvbiBpcyB0aGVvcmV0aWNhbGx5IG1lYW5pbmdmdWwsIHdlIHNob3VsZCBiZSBhYmxlIHRvIGludGVycHJldCB0aGUgZGlmZmVyZW50IHByb2ZpbGVzKS4NCg0KaSB1c2UgYHJlc2hhcGUyYCB0byBleHRyYWN0IHN1YnNjYWxlIG1lYW5zIFtub3RlOiBkYXR3IHdlcmUgdHJhbnNmb3JtZWQgaW50byBzdGFuZGFyZGl6ZWQgei1zY29yZXM7IHRodXMgcHJvZmlsZSBtZWFucyByZWZsZWN0IFNELXVuaXRzIGFib3ZlL2JlbG93IHNhbXBsZSBtZWFuICh3aGljaCBpcyAwKV0uDQoNCmBgYHtyLCBldmFsPUZ9DQpkYXRhLmZyYW1lKG00JHBhcmFtZXRlcnMkbWVhbixzdHJpbmdzQXNGYWN0b3JzID0gRikgJT4lDQogIHJvd25hbWVzX3RvX2NvbHVtbigpICU+JQ0KICByZW5hbWUoTW90aXZhdGlvbiA9IHJvd25hbWUpICU+JQ0KICBtZWx0KGlkLnZhcnMgPSAiTW90aXZhdGlvbiIsIHZhcmlhYmxlLm5hbWUgPSAiUHJvZmlsZSIsIHZhbHVlLm5hbWUgPSAiTWVhbiIpICU+JQ0KICBtdXRhdGUoTWVhbiA9IHJvdW5kKE1lYW4sIDIpLA0KICAgICAgICAgTWVhbiA9IGlmZWxzZShNZWFuPjEsMSwgTWVhbikjdHJpbSB2YWx1ZXMgZXhjZWVkaW5nICsxU0QNCiAgICAgICAgICkgLT4gbWVhbnMNCg0KI2dpdmUgYXBwcm9wcmlhdGUgbGFiZWxzDQptZWFucyRNb3RpdmF0aW9uIDwtIGlmZWxzZShtZWFucyRNb3RpdmF0aW9uPT0iVjEwXzEiLCAiRnVuIiwgaWZlbHNlKG1lYW5zJE1vdGl2YXRpb249PSJWMTBfMiIsICJIZWFsdGggJiBGaXRuZXNzIiwgaWZlbHNlKG1lYW5zJE1vdGl2YXRpb249PSJWMTBfMyIsICJBZXN0aGV0aWNzIiwgaWZlbHNlKG1lYW5zJE1vdGl2YXRpb249PSJWMTBfNCIsICJQZXJmb3JtYW5jZSAmIENvbXBldGl0aW9uIiwgaWZlbHNlKG1lYW5zJE1vdGl2YXRpb249PSJWMTBfNSIsICJTb2NpYWwgaW50ZXJhY3Rpb24iLCBOQSkpKSkpDQoNCiNwbG90DQptZWFucyAlPiUgZ2dwbG90KGFlcyhNb3RpdmF0aW9uLCBNZWFuLCBncm91cCA9IFByb2ZpbGUsIGNvbG9yID0gUHJvZmlsZSkpICsNCiAgZ2VvbV9saW5lKCkgKyBnZW9tX3BvaW50KCkgKw0KICBsYWJzKHg9TlVMTCwgeT0iU3RhbmRhcmRpemVkIHNjb3JlIikgKw0KICB0aGVtZV9idyhiYXNlX3NpemU9MTQpICsNCiAgZ2VvbV9obGluZSh5aW50ZXJjZXB0PTAsIGxpbmV0eXBlPSJkYXNoZWQiKSArDQogIHRoZW1lKGF4aXMudGV4dC54PWVsZW1lbnRfdGV4dChhbmdsZT0xNSwgaGp1c3Q9LjgpLGxlZ2VuZC5wb3NpdGlvbiA9ICJ0b3AiKQ0KYGBgDQoNCg0KIVtNY2x1c3Qgc29sdXRpb24gZm9yIEVFViwgNV0oLi9pbWFnZXMvbHBhLnBuZykNCg==</div>
+<style>
+.center {
+  text-align: center;
+  color: red;
+}
+</style>
+
+<hr>
+<br>
+<p class="center">Copyright &copy; 2023 <a href="mailto:rob.franken@ru.nl">Rob Franken</a></p>
+
+
+</div>
+</div>
+
+</div>
+
+<script>
+
+// add bootstrap table styles to pandoc tables
+function bootstrapStylePandocTables() {
+  $('tr.odd').parent('tbody').parent('table').addClass('table table-condensed');
+}
+$(document).ready(function () {
+  bootstrapStylePandocTables();
+});
+
+
+</script>
+
+<!-- tabsets -->
+
+<script>
+$(document).ready(function () {
+  window.buildTabsets("TOC");
+});
+
+$(document).ready(function () {
+  $('.tabset-dropdown > .nav-tabs > li').click(function () {
+    $(this).parent().toggleClass('nav-tabs-open');
+  });
+});
+</script>
+
+<!-- code folding -->
+<script>
+$(document).ready(function () {
+  window.initializeSourceEmbed("des.Rmd");
+  window.initializeCodeFolding("show" === "show");
+});
+</script>
+
+<script>
+$(document).ready(function ()  {
+
+    // temporarily add toc-ignore selector to headers for the consistency with Pandoc
+    $('.unlisted.unnumbered').addClass('toc-ignore')
+
+    // move toc-ignore selectors from section div to header
+    $('div.section.toc-ignore')
+        .removeClass('toc-ignore')
+        .children('h1,h2,h3,h4,h5').addClass('toc-ignore');
+
+    // establish options
+    var options = {
+      selectors: "h1",
+      theme: "bootstrap3",
+      context: '.toc-content',
+      hashGenerator: function (text) {
+        return text.replace(/[.\\/?&!#<>]/g, '').replace(/\s/g, '_');
+      },
+      ignoreSelector: ".toc-ignore",
+      scrollTo: 0
+    };
+    options.showAndHide = true;
+    options.smoothScroll = true;
+
+    // tocify
+    var toc = $("#TOC").tocify(options).data("toc-tocify");
+});
+</script>
+
+<!-- dynamically load mathjax for compatibility with self-contained -->
+<script>
+  (function () {
+    var script = document.createElement("script");
+    script.type = "text/javascript";
+    script.src  = "https://mathjax.rstudio.com/latest/MathJax.js?config=TeX-AMS-MML_HTMLorMML";
+    document.getElementsByTagName("head")[0].appendChild(script);
+  })();
+</script>
+
+</body>
+</html>

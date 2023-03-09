@@ -49,7 +49,7 @@ gc()
 
 ## general custom functions
 
-- `fpackage.check`: Check if packages are installed (and install if not) in R ([source](https://vbaliga.github.io/verify-that-r-packages-are-installed-and-loaded/))
+- `fpackage.check`: Check if packages are installed (and install if not) in R
 - `fsave`: Function to save data with time stamp in correct directory
 - `fload`: Function to load R-objects under new names
 
@@ -84,12 +84,17 @@ fload  <- function(fileName){
 ## necessary packages
 
 - `tidyverse`: data wrangling
+- `reshape2`: reshaping data
 - `mlogit`: construct dataframe for multinomial logit model
 - `haven`: read and write various data formats
 - `sjlabelled`: work with labelled (SPSS) data
+- `mclust`: latent (motivational) profile analysis
+- `Hmisc`: containing `rcorr()` funciton to create correlation matrix
+- `ggcorrplot`: visualize corelation matrix
+- `ggplot2`
 
 ```{r, eval=FALSE}
-packages = c("tidyverse", "mlogit", "haven", "sjlabelled")
+packages = c("tidyverse", "mlogit", "haven", "sjlabelled", "mclust", "Hmisc", "ggcorrplot", "reshape2", "ggplot2")
 fpackage.check(packages)
 ```
 
@@ -132,7 +137,7 @@ df$id <- 1:nrow(df)
 # to long format
 
 # each list element contains the choices for each set. thus presatielist[[2]][3] is the
-# 'presatie'-attribute of person 3, in choice set 
+# 'presatie'-attribute of person 3, in choice set 2
 
 prestatielist <- list()
 prestatielist[[1]] <- c("attribute_16", "attribute_17", "attribute_18")
@@ -219,7 +224,6 @@ sum(dups)
 # and with no duplicates and no choice sets without choices, this should work 
 df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt",
     shape = "long")
-
 ```
 
 <br>
@@ -234,10 +238,10 @@ fsave(df_ml, "abs_ml.RData")
 
 # I&O Panel
 
-clean environment, but keep save/load functions
+clean environment, but keep `fsave` functions
 
 ```{r, eval=F}
-rm(list=setdiff(ls(), c("fload","fsave")))
+rm(list=setdiff(ls(), c("fsave")))
 ```
 
 <br>
@@ -246,7 +250,7 @@ rm(list=setdiff(ls(), c("fload","fsave")))
 
 Load in data of the I&O panel. Unlabel the data.
 
-```{r, eval=F}
+```{r}
 haven::read_sav("./rawdata/DRADTRIAL22_totaal.sav") %>%
   sjlabelled::unlabel(.,verbose=F) -> df
 ```
@@ -254,6 +258,123 @@ haven::read_sav("./rawdata/DRADTRIAL22_totaal.sav") %>%
 <br> 
 
 ## data wrangling
+
+
+### motivations
+I need to match ego-level covariates for moderational analyses. Especially sports motivations (`V10`).
+
+```{r}
+#subset motivation data
+mot <- df %>%
+  select(V10_1, V10_2, V10_3, V10_4, V10_5)
+#and add identifier
+mot$id <- 1:nrow(mot)
+```
+
+
+<br>
+
+descriptives
+
+```{r}
+des <- mot %>%
+  select(-id) %>%
+  gather("Variable", "value") %>%
+  group_by(Variable) %>%
+  summarise(Mean=mean(value,na.rm=T),
+            SD=sd(value,na.rm=T),
+            min=min(value,na.rm=T),
+            max=max(value,na.rm=T))
+
+des$Variable <- c("Fun", "Health and fitness", "Aesthetics", "Performance and competition", "Social interaction")
+
+options(knitr.kable.NA='')
+knitr::kable(des, digits=2, "html") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+
+#rm(des)
+```
+
+<br>
+
+correlation matrix
+
+```{r}
+tab <- mot[complete.cases(mot),-6]
+names(tab) <- c("Fun", "Health and fitness", "Aesthetics", "Performance and competition", "Social interaction")
+#Hmisc::rcorr(as.matrix(tab))
+
+#visualize
+ggcorrplot::ggcorrplot(cor(tab))
+#rm(tab)
+```
+
+
+### motivaitonal clusters?
+
+`Mclust` requires complete data. We standardize input variables, for reasons of interpretability.
+
+```{r, eval=F}
+mot %>%
+  na.omit() %>% #listwise deletion
+  mutate(across(!id, scale)) -> mot.nm #standardize indicators, expect id.
+```
+
+<br>
+
+Explore model fit by plotting BIC, ICL (optional: bootstrapped LRTS) with number of profiles (1-9)
+
+```{r, eval=F}
+BIC <- mclustBIC(mot.nm %>% select(-id))
+ICL <- mclustICL(mot.nm %>% select(-id))
+#LRT <- mclustBootstrapLRT(mot.nm %>%select(-id), modelName = "EEV")
+
+plot(BIC)
+plot(ICL)
+summary(BIC)
+summary(ICL)
+```
+
+```{r, eval=F}
+m2 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=2, x=BIC)
+m3 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=3, x=BIC)
+m4 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=4, x=BIC)
+m5 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=5, x=BIC)
+m6 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=6, x=BIC)
+m7 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=7, x=BIC)
+m8 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=8, x=BIC)
+```
+
+<br>
+
+plot results, to make solution more intuitive (if solution is theoretically meaningful, we should be able to interpret the different profiles).
+
+i use `reshape2` to extract subscale means [note: datw were transformed into standardized z-scores; thus profile means reflect SD-units above/below sample mean (which is 0)].
+
+```{r, eval=F}
+data.frame(m4$parameters$mean,stringsAsFactors = F) %>%
+  rownames_to_column() %>%
+  rename(Motivation = rowname) %>%
+  melt(id.vars = "Motivation", variable.name = "Profile", value.name = "Mean") %>%
+  mutate(Mean = round(Mean, 2),
+         Mean = ifelse(Mean>1,1, Mean)#trim values exceeding +1SD
+         ) -> means
+
+#give appropriate labels
+means$Motivation <- ifelse(means$Motivation=="V10_1", "Fun", ifelse(means$Motivation=="V10_2", "Health & Fitness", ifelse(means$Motivation=="V10_3", "Aesthetics", ifelse(means$Motivation=="V10_4", "Performance & Competition", ifelse(means$Motivation=="V10_5", "Social interaction", NA)))))
+
+#plot
+means %>% ggplot(aes(Motivation, Mean, group = Profile, color = Profile)) +
+  geom_line() + geom_point() +
+  labs(x=NULL, y="Standardized score") +
+  theme_bw(base_size=14) +
+  geom_hline(yintercept=0, linetype="dashed") +
+  theme(axis.text.x=element_text(angle=15, hjust=.8),legend.position = "top")
+```
+
+
+![Mclust solution for EEV, 5](./images/lpa.png)
+
 
 ```{r, eval=F}
 #add id
@@ -351,6 +472,9 @@ df_long$esteem <- ifelse(df_long$esteem == 1, "moedigt je vaak aan",
 <!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) 
 perhaps i need to use wave 1...
 --->
+
+
+
 
 
 <br>

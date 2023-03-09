@@ -7,10 +7,9 @@ exclude:
   - "rawdata"
   - "processed"
   - "local"
-
+  - "working_scripts"
 bibliography: references.bib
 navbar:
-  
   left:
     - icon: fa-info
       text: "About"
@@ -22,12 +21,12 @@ navbar:
       text: "Analyses"
       menu:
       - text: "1. Descriptives"
-#        href: des.html
+        href: des.html
       - text: "2. Models"
         href: analyse.html
-  right:
-    - icon: fab fa-github
-      href: https://github.com/robfranken/DCE_sports
+#  right:
+#    - icon: fab fa-github
+#      href: https://github.com/robfranken/networkchange
 output:
   html_document:
     theme: flatly
