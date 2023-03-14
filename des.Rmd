@@ -123,6 +123,9 @@ mot <- df %>%
   select(V10_1, V10_2, V10_3, V10_4, V10_5)
 #and add identifier
 mot$id <- 1:nrow(mot)
+
+#also add gender
+mot$gender <- df$GESLACHT2
 ```
 
 
@@ -132,7 +135,7 @@ descriptives
 
 ```{r}
 des <- mot %>%
-  select(-id) %>%
+  select(-c(id,gender)) %>%
   gather("Variable", "value") %>%
   group_by(Variable) %>%
   summarise(Mean=mean(value,na.rm=T),
@@ -140,13 +143,40 @@ des <- mot %>%
             min=min(value,na.rm=T),
             max=max(value,na.rm=T))
 
+des_males <- mot[which(mot$gender==1),] %>%
+  select(-c(id,gender)) %>%
+  gather("Variable", "value") %>%
+  group_by(Variable) %>%
+  summarise(Mean=mean(value,na.rm=T),
+            SD=sd(value,na.rm=T),
+            min=min(value,na.rm=T),
+            max=max(value,na.rm=T))
+
+des_females <- mot[which(mot$gender==2),] %>%
+  select(-c(id,gender)) %>%
+  gather("Variable", "value") %>%
+  group_by(Variable) %>%
+  summarise(Mean=mean(value,na.rm=T),
+            SD=sd(value,na.rm=T),
+            min=min(value,na.rm=T),
+            max=max(value,na.rm=T))
+
+
+
 des$Variable <- c("Fun", "Health and fitness", "Aesthetics", "Performance and competition", "Social interaction")
+des_males$Variable <- c("Fun", "Health and fitness", "Aesthetics", "Performance and competition", "Social interaction")
+des_females$Variable <- c("Fun", "Health and fitness", "Aesthetics", "Performance and competition", "Social interaction")
 
 options(knitr.kable.NA='')
-knitr::kable(des, digits=2, "html") %>%
+knitr::kable(des, digits=2, "html", caption="Reasons for taking part in sports") %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
 
-#rm(des)
+knitr::kable(des_males, digits=2, "html", caption="Males") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+
+knitr::kable(des_females, digits=2, "html", caption="Females") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+           
 ```
 
 <br>
@@ -154,7 +184,7 @@ knitr::kable(des, digits=2, "html") %>%
 correlation matrix
 
 ```{r}
-tab <- mot[complete.cases(mot),-6]
+tab <- mot[complete.cases(mot),-c(6,7)]
 names(tab) <- c("Fun", "Health and fitness", "Aesthetics", "Performance and competition", "Social interaction")
 #Hmisc::rcorr(as.matrix(tab))
 
@@ -171,7 +201,8 @@ ggcorrplot::ggcorrplot(cor(tab))
 ```{r, eval=F}
 mot %>%
   na.omit() %>% #listwise deletion
-  mutate(across(!id, scale)) -> mot.nm #standardize indicators, expect id.
+  mutate(across(!c(id,gender), scale)) -> mot.nm #standardize indicators, expect id.
+
 ```
 
 <br>
@@ -179,8 +210,8 @@ mot %>%
 Explore model fit by plotting BIC, ICL (optional: bootstrapped LRTS) with number of profiles (1-9)
 
 ```{r, eval=F}
-BIC <- mclustBIC(mot.nm %>% select(-id))
-ICL <- mclustICL(mot.nm %>% select(-id))
+BIC <- mclustBIC(mot.nm %>% select(-c(id,gender)))
+ICL <- mclustICL(mot.nm %>% select(-c(id,gender)))
 #LRT <- mclustBootstrapLRT(mot.nm %>%select(-id), modelName = "EEV")
 
 plot(BIC)
@@ -190,13 +221,13 @@ summary(ICL)
 ```
 
 ```{r, eval=F}
-m2 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=2, x=BIC)
-m3 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=3, x=BIC)
-m4 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=4, x=BIC)
-m5 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=5, x=BIC)
-m6 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=6, x=BIC)
-m7 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=7, x=BIC)
-m8 <- Mclust(mot.nm %>% select(-id), modelNames="EEV", G=8, x=BIC)
+m2 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=2, x=BIC)
+m3 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=3, x=BIC)
+m4 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=4, x=BIC)
+m5 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=5, x=BIC)
+m6 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=6, x=BIC)
+m7 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=7, x=BIC)
+m8 <- Mclust(mot.nm %>% select(-c(id,gender)), modelNames="EEV", G=8, x=BIC)
 ```
 
 <br>
