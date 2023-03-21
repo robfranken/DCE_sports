@@ -118,6 +118,8 @@ haven::read_sav("./rawdata/DRADTRIAL22_totaal.sav") %>%
 
 
 ```{r}
+nrow(df[which(df$GESLACHT2==2),])
+
 #subset motivation data
 mot <- df %>%
   select(V10_1, V10_2, V10_3, V10_4, V10_5)

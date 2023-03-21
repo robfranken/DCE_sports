@@ -143,7 +143,16 @@ knitr::kable(res, digits=3, "html",  caption="Conditional logit model: preferenc
 ## I&O panel
 ```{r, eval=F}
 m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml)
+
+
+panelm <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml)
+
+mlogit(choice ~ prestatie + kennis + gezellig + esteem, panel = TRUE, rpar = c(id= "n"), corelation=TRUE, data=io_ml)
+
+
+
 save(m1,file="./results/io_m1.RData")
+?mlogit
 ```
 
 ```{r,class.source = 'fold-hide'}

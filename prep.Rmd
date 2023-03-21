@@ -351,7 +351,7 @@ df_long$esteem <- ifelse(df_long$esteem == 1, "moedigt je vaak aan",
                              ifelse(df_long$esteem == 2, "moedigt je soms aan",
                              ifelse(df_long$esteem == 3, "moedigt je nooit aan", NA)))
 
-
+fix(df_long)
 ```
 
 <!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) 
@@ -390,8 +390,10 @@ dups <- duplicated(df_sel)
 sum(dups)
 
 # and with no duplicates and no choice sets without choices, this should work 
-df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt",
-    shape = "long")
+df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long")
+
+df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long", group.var = "female")
+
 ```
 
 <br>
