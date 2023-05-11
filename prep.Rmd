@@ -88,17 +88,19 @@ fload  <- function(fileName){
 - `mlogit`: construct dataframe for multinomial logit model
 - `haven`: read and write various data formats
 - `sjlabelled`: work with labelled (SPSS) data
-- `mclust`: latent (motivational) profile analysis
-- `Hmisc`: containing `rcorr()` funciton to create correlation matrix
-- `ggcorrplot`: visualize corelation matrix
+- `Hmisc`: containing `rcorr()` function to create correlation matrix
+- `ggcorrplot`: visualize correlation matrix
 - `ggplot2`
 
 ```{r, eval=FALSE}
-packages = c("tidyverse", "mlogit", "haven", "sjlabelled", "mclust", "Hmisc", "ggcorrplot", "reshape2", "ggplot2")
+packages = c("tidyverse", "mlogit", "haven", "sjlabelled", "Hmisc", "ggcorrplot", "reshape2", "ggplot2")
 fpackage.check(packages)
 ```
 
 <br>
+
+
+<!---
 
 ---
 
@@ -192,7 +194,7 @@ df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
 df_long$choice <- (df_long$chosen == c("Persoon 1", "Persoon 2", "Persoon 3")[df_long$options])
 ```
 
-<!-- @RF: to-do, match other ego-level covariates for descriptive statistics and moderational analyses (sports history, age, ...) --->
+
 
 <br>
 
@@ -234,25 +236,23 @@ fsave(df_ml, "abs_ml.RData")
 ```
 <br>
 
+-->
+
 ---
 
 # I&O Panel
 
-clean environment, but keep `fsave` functions
-
-```{r, eval=F}
-rm(list=setdiff(ls(), c("fsave")))
-```
-
-<br>
 
 ## load in data
 
-Load in data of the I&O panel. Unlabel the data.
+Load in waves 1 and 2 of the I&O panel. Unlabel the data.
 
 ```{r}
+haven::read_sav("./rawdata/DRADTRIAL21_totaal.sav") %>%
+  sjlabelled::unlabel(.,verbose=FALSE) -> df1
+
 haven::read_sav("./rawdata/DRADTRIAL22_totaal.sav") %>%
-  sjlabelled::unlabel(.,verbose=F) -> df
+  sjlabelled::unlabel(.,verbose=FALSE) -> df2
 ```
 
 <br> 
@@ -261,17 +261,81 @@ haven::read_sav("./rawdata/DRADTRIAL22_totaal.sav") %>%
 
 
 ```{r, eval=F}
-#add id
-df$id <- 1:nrow(df)
+#subset wave 1 respondents that filled out wave 2
+df1. <- df1[which(df1$SAMPLE_ID %in% df2$SAMPLE_ID), ]
 
-#in case we want to merge this with the ABS-data:
-df$id <- df$id + 93
+# interaction variables
+# current involvement
+#df2$V5
+df2$activeW2 <- ifelse(df2$V5 == 1, 0, 1)
+#prop.table(table(df2$activeW2)) #64 percent currently active, at w2
 
-#match covariates, here only gender (ref=male)
+#number of sports
+#table(df2$V5)
+#psych::describe(c(rep(1,1270), rep(2,573), rep(3,224)))
+
+#self report sports frequency
+sport1 <- ifelse(df2$V6a==1, 7, ifelse(df2$V6a==2, 4, ifelse(df2$V6a==3, 1.5, ifelse(df2$V6a==4, 0.5, NA))))
+sport2 <- ifelse(df2$V6b==1, 7, ifelse(df2$V6b==2, 4, ifelse(df2$V6b==3, 1.5, ifelse(df2$V6b==4, 0.5, NA))))
+sport3 <- ifelse(df2$V6c==1, 7, ifelse(df2$V6c==2, 4, ifelse(df2$V6c==3, 1.5, ifelse(df2$V6c==4, 0.5, NA))))
+
+df2$sportsfreq <- NA
+df2$sportsfreq[which(df2$activeW2==1)] <- rowSums(cbind(sport1,sport2,sport3)[which(df2$activeW2==1),], na.rm=TRUE)
+
+#table(df2$sportsfreq)
+#cap at 14, only 1 higher.
+df2$sportsfreq <- ifelse(df2$sportsfreq>14, 14, df2$sportsfreq)
+#psych::describe(df2$sportsfreq)
+
+#wave 2 sport variables
+#df2$V5 #afgelopen maand sport (geen, 1, 2 of 3)
+#df2$V6 #frequentie (dagelijk, 3-5, 1-2 keer per week; 1-3 keer per maand)
+#df2$V7a_1 #verband (e.g., sportclub, fitnesscentrum)
+#df2$V8a_6 #met wie (samen vs. alleen)
+
+#wave 1 sport variables
+df1.$activeW1 <- ifelse(df1.$V5 == 1, 0, 1) #past month
+df1.$active.educ <- ifelse(df1.$V17 == 1, 0, 1) #last year (full time) education
+df1.$active.laborm <- ifelse(df1.$V21 == 1, 0, 1) #year after transition to labor market
+df1.$active.child <- ifelse(df1.$V39 == 1, 0, 1) #year before first child
+df1.$active.child1 <- ifelse(df1.$V47 == 1, 0, 1) #year when first child was 1 year old
+df1.$active.prim <- ifelse(df1.$V70 == 1, 0, 1) #last 2 years of primary school
+df1.$active.sec <- ifelse(df1.$V75 == 1, 0, 1) #last years secondary school
+
+#subset these variables about sports history/timeline
+df1.. <- df1.[, c("activeW1", "active.educ", "active.laborm", "active.child", "active.child1", "active.prim", "active.sec", "SAMPLE_ID")]
+
+#merge with df2
+df2 <- merge( df2, df1.., by = "SAMPLE_ID") 
+
+#construct "life-course sports continuity index", as number of stages in which one was active divided by the number of applicable phases.
+df2$activity.index  <- NA
+for (i in 1:nrow(df2)) { 
+  #subset activity variables
+  act <- df2[i, c("activeW2", "activeW1", "active.educ", "active.child1", "active.child", "active.laborm", "active.sec", "active.prim")]
+  #exclude NA
+  act.rna <- act[!is.na(act)]
+  #ratio
+  df2$activity.index[i] <-  length(which(act.rna==1)) / length(act.rna)
+}
+
+#subset dce data and relevant covariates
+#names(df2)
+
+df <- df2[, c(
+  which(grepl("Keuze", names(df2))), #dce data
+  which(grepl("activ", names(df2))), #activity variables
+  289, 299)#gender, sports frequency weekly
+  ]
+
+#gender to binary, [0,1]
 df$female <- df$GESLACHT2 - 1
 #X to NA
 df$female <- ifelse(df$female>1, NA, df$female)
 
+#attach id
+df$id <- 1:nrow(df)
+#fix(df)
 
 # to long format
 
@@ -294,7 +358,6 @@ gezelliglist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Gezellig", "LoopKeuz
 gezelliglist[[2]] <- c("LoopKeuzesets_2_LoopAlternatieven_1_Gezellig", "LoopKeuzesets_2_LoopAlternatieven_2_Gezellig", "LoopKeuzesets_2_LoopAlternatieven_3_Gezellig")
 gezelliglist[[3]] <- c("LoopKeuzesets_3_LoopAlternatieven_1_Gezellig", "LoopKeuzesets_3_LoopAlternatieven_2_Gezellig", "LoopKeuzesets_3_LoopAlternatieven_3_Gezellig")
 
-
 esteemlist <- list()
 esteemlist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Aanmoediging", "LoopKeuzesets_1_LoopAlternatieven_2_Aanmoediging", "LoopKeuzesets_1_LoopAlternatieven_3_Aanmoediging")
 esteemlist[[2]] <- c("LoopKeuzesets_2_LoopAlternatieven_1_Aanmoediging", "LoopKeuzesets_2_LoopAlternatieven_2_Aanmoediging", "LoopKeuzesets_2_LoopAlternatieven_3_Aanmoediging")
@@ -305,19 +368,19 @@ chosen <- c("V84_LoopKeuzesets_1", "V85_LoopKeuzesets_2", "V86_LoopKeuzesets_3")
 
 for (set in 1:3) {
 
-    # to long format
+  # to long format
     
   for (choice in 1:3) {
     
         data <- as.data.frame(df)
         data$set <- set
-        data$options <- choice
+        data$options <- choice 
         data$prestatie <- data[, names(data) == prestatielist[[set]][choice]]
         data$kennis <- data[, names(data) == kennislist[[set]][choice]]
         data$gezellig <- data[, names(data) == gezelliglist[[set]][choice]]
         data$esteem <- data[, names(data) == esteemlist[[set]][choice]]
         data$chosen <- data[, names(data) == chosen[set]]
-        data <- data[, names(data) %in% c("id", "female", "set", "options", "prestatie", "kennis", "gezellig",
+        data <- data[, names(data) %in% c("id", "female", "activeW2", "activity.index", "sportsfreq", "set", "options", "prestatie", "kennis", "gezellig",
             "esteem", "chosen")]
         if (set == 1 & choice == 1) {
             df_long <- data
@@ -332,7 +395,6 @@ df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
 
 # define the choice
 df_long$choice <- (df_long$chosen == c(1, 2, 3)[df_long$options])
-
 
 #recode number into answer
 df_long$prestatie <- ifelse(df_long$prestatie == 1, "vindt het erg leuk om sport-prestaties te vergelijken",
@@ -351,16 +413,16 @@ df_long$esteem <- ifelse(df_long$esteem == 1, "moedigt je vaak aan",
                              ifelse(df_long$esteem == 2, "moedigt je soms aan",
                              ifelse(df_long$esteem == 3, "moedigt je nooit aan", NA)))
 
-fix(df_long)
+row.names(df_long) <- 1:nrow(df_long)
+#fix(df_long)
+
+cor(df$female,df$activeW2, use="complete.obs")
+?cor
 ```
 
 <!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) 
 perhaps i need to use wave 1...
 --->
-
-
-
-
 
 <br>
 
@@ -389,11 +451,12 @@ df_long %>%
 dups <- duplicated(df_sel)
 sum(dups)
 
+#head(df_long)
+
 # and with no duplicates and no choice sets without choices, this should work 
+df_long$sportsfreq[is.na(df_long$sportsfreq)] <- 0
+
 df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long")
-
-df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long", group.var = "female")
-
 ```
 
 <br>
@@ -402,11 +465,5 @@ df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_c
 ```{r, eval=F}
 fsave(df_ml, "io_ml.RData")
 ```
-
-<br>
-
-----
-
-### References
 
 

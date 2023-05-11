@@ -100,60 +100,26 @@ fpackage.check(packages)
 #get todays date:
 today <- gsub("-", "", Sys.Date())
 
-abs_ml <- fload(paste0("./data/processed/",today,"abs_ml.RData"))
 io_ml <- fload(paste0("./data/processed/",today,"io_ml.RData"))
 rm (today)
 ```
 
-
 <br>
 
-# run model {.tabset .tabset-fade}
-
-## Sports & Friendships
+# run model
 
 ```{r, eval=F}
-m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | 0, abs_ml)
-save(m1,file="./results/abs_m1.RData")
-```
+#main model
 
-```{r,class.source = 'fold-hide'}
-ans_abs <- fload("./results/abs_m1.RData")
-test <- summary(ans_abs)
+class(io_ml)
 
-res <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
-res$vars[1] <- "Comparison: really likes to compare sports performances"
-res$vars[2] <- "Comparison: does not like to compare sports performances"
-
-res$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
-res$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
-
-res$vars[5] <- "Social: wants a combination of joyful and purposeful training"
-res$vars[6] <- "Social: exercises purposefully and seriously"
-
-res$vars[7] <- "Encouragement: sometimes encourages you"
-res$vars[8] <- "Encouragement: often encourages you"
-
-names(res)[1] <- ""
-
-knitr::kable(res, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes in 'Sports & Friendships' study") %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
-```
-
-## I&O panel
-```{r, eval=F}
-m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml)
-
-
-panelm <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml)
-
-mlogit(choice ~ prestatie + kennis + gezellig + esteem, panel = TRUE, rpar = c(id= "n"), corelation=TRUE, data=io_ml)
-
-
-
+m1 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | 0, data = io_ml)
+summary(m1)
 save(m1,file="./results/io_m1.RData")
-?mlogit
 ```
+<br>
+
+## output
 
 ```{r,class.source = 'fold-hide'}
 ans_io <- fload("./results/io_m1.RData")
@@ -174,34 +140,233 @@ res$vars[8] <- "Encouragement: often encourages you"
 
 names(res)[1] <- ""
 
+names(res)[2] <- "Log-odds"
+
 knitr::kable(res, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes in I&O panel") %>%
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
+<br>
 
-# {.unlisted .unnumbered}
+### semi-elasticities
 
-## observations
+To-do:
+
+- Present average semi-elasticities for all levels in contrast to the grand mean. Grand mean reflects the decision probability for one of the three sports partners if the respondent has no preferences (thus, a base probability of 1/3, which is set to zero). Accordingly, the positive effect - displayed to the right of the zero line on the x-axis - indicates that people are, on average, more likely to choose a sports partner if they have the respective attribute. And an effect displayed to the left of the zero line indicates people are less likely to choose a sports partner if it has the respective attribute. Whiskers represent 95% confident intervals.
+
+<br>
+
+
+### observations
 
 1. Comparison: respondents prefer a sports partner who places an appropriate amount of emphasis on social comparison — not too much and not too little.
 
-2. Knowledge: respondents don't want a sports partner that knows less about training and technique than themselves. Only in the 'Sports and Friendships' study, we find a significant preference for sports partners that know more.
+2. Knowledge: respondents don't want a sports partner that knows less about training and technique than themselves. 
 
 3. Social: respondents seem to favor someone who combines having fun and being goal-oriented while training; however, they appear to prefer exercising for fun over doing so solely seriously
 
-4: Encouragement: respondents prefer a sports partner that regularly encourages them.
+4. Encouragement: respondents prefer a sports partner that regularly encourages them.
 
+<br>
 
-# gender differences {.tabset .tabset-fade}
+----
 
-Test gender interaction quick 'n dirty: subset I&O data by gender and perform separate analyses
+# subgroup analyses
 
+##  male vs. female {.tabset .tabset-fade}
 
-## females
+### males
+
+```{r, eval=F}
+io_ml_m <- io_ml[which(io_ml$female==0),]
+mm <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_m)
+save(mm,file="./results/io_m1_males.RData")
+```
+
+```{r,class.source = 'fold-hide'}
+ans_io <- fload("./results/io_m1_males.RData")
+test <- summary(ans_io)
+
+resm <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
+resm$vars[1] <- "Comparison: really likes to compare sports performances"
+resm$vars[2] <- "Comparison: does not like to compare sports performances"
+
+resm$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
+resm$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
+
+resm$vars[5] <- "Social: exercises for fun and enjoyment"
+resm$vars[6] <- "Social: wants a combination of joyful and purposeful training"
+
+resm$vars[7] <- "Encouragement: sometimes encourages you"
+resm$vars[8] <- "Encouragement: often encourages you"
+
+names(resm)[1] <- ""
+names(res)[2] <- "Log-odds"
+
+knitr::kable(resm, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among males in I&O panel") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+### females
 
 ```{r, eval=F}
 io_ml_f <- io_ml[which(io_ml$female==1),]
-mf <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml_f)
+mf <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_f)
+save(mf,file="./results/io_m1_females.RData")
+```
+
+```{r,class.source = 'fold-hide'}
+ans_io <- fload("./results/io_m1_females.RData")
+test <- summary(ans_io)
+
+resf <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
+resf$vars[1] <- "Comparison: really likes to compare sports performances"
+resf$vars[2] <- "Comparison: does not like to compare sports performances"
+
+resf$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
+resf$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
+
+resf$vars[5] <- "Social: exercises for fun and enjoyment"
+resf$vars[6] <- "Social: wants a combination of joyful and purposeful training"
+
+resf$vars[7] <- "Encouragement: sometimes encourages you"
+resf$vars[8] <- "Encouragement: often encourages you"
+
+names(resf)[1] <- ""
+names(res)[2] <- "Log-odds"
+
+knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among females in I&O panel") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+### semi-elasticities
+
+
+## {.unlisted .unnumbered}
+
+Both genders won't choose a sports partner who places great emphasis on social comparison and competition. However, males generally prefer a sports partner who places some emphasis on social comparison, whereas females show no significant difference in their preference for a partner who places little or no emphasis on social comparison. In line with the idea that male sports participation is driven to a greater extent by status/competition than females (who were expected to be more driven by affiliation, which is not apparent from the model results).
+
+
+## currently active {.tabset .tabset-fade}
+
+### yes 
+
+```{r, eval=F}
+io_ml_active <- io_ml[which(io_ml$activeW2==1),]
+ma <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_active)
+save(ma,file="./results/io_m1_actives.RData")
+```
+
+```{r,class.source = 'fold-hide'}
+ans_io <- fload("./results/io_m1_actives.RData")
+test <- summary(ans_io)
+
+resf <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
+resf$vars[1] <- "Comparison: really likes to compare sports performances"
+resf$vars[2] <- "Comparison: does not like to compare sports performances"
+
+resf$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
+resf$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
+
+resf$vars[5] <- "Social: exercises for fun and enjoyment"
+resf$vars[6] <- "Social: wants a combination of joyful and purposeful training"
+
+resf$vars[7] <- "Encouragement: sometimes encourages you"
+resf$vars[8] <- "Encouragement: often encourages you"
+
+names(resf)[1] <- ""
+names(resf)[2] <- "Log-odds"
+
+knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among I&O panel respondents who are currently active in sports.") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+### no
+
+```{r, eval=F}
+io_ml_inactive <- io_ml[which(io_ml$activeW2==0),]
+mna <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_inactive)
+save(mf,file="./results/io_m1_inactives.RData")
+```
+
+```{r,class.source = 'fold-hide'}
+ans_io <- fload("./results/io_m1_inactives.RData")
+test <- summary(ans_io)
+
+resf <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
+resf$vars[1] <- "Comparison: really likes to compare sports performances"
+resf$vars[2] <- "Comparison: does not like to compare sports performances"
+
+resf$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
+resf$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
+
+resf$vars[5] <- "Social: exercises for fun and enjoyment"
+resf$vars[6] <- "Social: wants a combination of joyful and purposeful training"
+
+resf$vars[7] <- "Encouragement: sometimes encourages you"
+resf$vars[8] <- "Encouragement: often encourages you"
+
+names(resf)[1] <- ""
+names(resf)[2] <- "Log-odds"
+
+knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among I&O panel respondents who are currently not active in sports.") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+
+### semi-elasticities
+
+## {.unlisted .unnumbered}
+
+Similar pattern: those currently active prefer sports partners who place an appropriate amount of emphasis on social comparison (not too much, not too little). Those currently inactive do not: they dislike great emphasis on social comparison/competition, but do not prefer a little over no emphasis on social comparison. Again, in line with the expectation. Currently, no notable difference in importance of social-emotional motives (i.e., encouragement, affiliation).
+
+Note that the genders do hardly differ in whether or not they are currently active [r(female, active) < -0.02].
+
+
+
+<!---
+--------------------
+
+
+<br>
+<br>
+
+------------------
+
+
+# interactions 
+
+```{r, eval=F}
+#interaction model
+
+
+str(io_ml)
+m2 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | female, data = io_ml)
+summary(m2)
+
+m2 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | female, data = io_ml, method = "bhhh")
+
+save(m2,file="./results/io_m2.RData")
+
+mlogit(choice ~ x | z + x:z, data = your_dataset)
+
+```
+
+
+
+
+
+
+Test interactions quick 'n dirty: subset data per group and estimate different models
+
+## gender {.tabset .tabset-fade}
+
+### females 
+
+```{r, eval=F}
+io_ml_f <- io_ml[which(io_ml$female==1),]
+mf <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_f)
 save(mf,file="./results/io_m1_females.RData")
 ```
 
@@ -228,11 +393,11 @@ knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferen
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-## males
+### males
 
 ```{r, eval=F}
 io_ml_m <- io_ml[which(io_ml$female==0),]
-mm <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0,io_ml_m)
+mm <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_m)
 save(mm,file="./results/io_m1_males.RData")
 ```
 
@@ -259,7 +424,56 @@ knitr::kable(resm, digits=3, "html",  caption="Conditional logit model: preferen
   kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
 ```
 
-# {.unlisted .unnumbered}
+## {.unlisted .unnumbered}
 
-The one difference is that males dislike a sports partner who *does not like to compare sports performances* compared to a sports partner that somewhat likes to compare sports performance (males estimate: `r resm$Estimate[2]`, females estimate: `r resf$Estimate[2]`). Other than that, preferences for sports partners are rather similar.
+No difference...
 
+
+
+## currently active {.tabset .tabset-fade}
+
+### yes 
+
+```{r, eval=F}
+io_ml_active <- io_ml[which(io_ml$activeW2==1),]
+ma <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_active)
+save(ma,file="./results/io_m1_actives.RData")
+```
+
+```{r,class.source = 'fold-hide'}
+ans_io <- fload("./results/io_m1_actives.RData")
+test <- summary(ans_io)
+
+resf <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
+resf$vars[1] <- "Comparison: really likes to compare sports performances"
+resf$vars[2] <- "Comparison: does not like to compare sports performances"
+
+resf$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
+resf$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
+
+resf$vars[5] <- "Social: exercises for fun and enjoyment"
+resf$vars[6] <- "Social: wants a combination of joyful and purposeful training"
+
+resf$vars[7] <- "Encouragement: sometimes encourages you"
+resf$vars[8] <- "Encouragement: often encourages you"
+
+names(resf)[1] <- ""
+
+knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among I&O panel respondents who are currently active in sports.") %>%
+  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
+```
+
+### no
+
+????
+
+```{r, eval=F}
+io_ml_inactive <- io_ml[which(io_ml$activeW2==0),]
+mna <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_inactive)
+
+save(mf,file="./results/io_m1_inactives.RData")
+```
+
+
+## {.unlisted .unnumbered}
+-->
