@@ -148,14 +148,14 @@ knitr::kable(res, digits=3, "html",  caption="Conditional logit model: preferenc
 
 <br>
 
-### semi-elasticities
+<!----
 
 To-do:
 
 - Present average semi-elasticities for all levels in contrast to the grand mean. Grand mean reflects the decision probability for one of the three sports partners if the respondent has no preferences (thus, a base probability of 1/3, which is set to zero). Accordingly, the positive effect - displayed to the right of the zero line on the x-axis - indicates that people are, on average, more likely to choose a sports partner if they have the respective attribute. And an effect displayed to the left of the zero line indicates people are less likely to choose a sports partner if it has the respective attribute. Whiskers represent 95% confident intervals.
 
 <br>
-
+-->
 
 ### observations
 
@@ -240,7 +240,6 @@ knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferen
 ```
 
 
-### semi-elasticities
 
 
 ## {.unlisted .unnumbered}
@@ -315,7 +314,6 @@ knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferen
 ```
 
 
-### semi-elasticities
 
 ## {.unlisted .unnumbered}
 
