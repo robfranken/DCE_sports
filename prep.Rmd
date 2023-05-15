@@ -88,12 +88,9 @@ fload  <- function(fileName){
 - `mlogit`: construct dataframe for multinomial logit model
 - `haven`: read and write various data formats
 - `sjlabelled`: work with labelled (SPSS) data
-- `Hmisc`: containing `rcorr()` function to create correlation matrix
-- `ggcorrplot`: visualize correlation matrix
-- `ggplot2`
 
 ```{r, eval=FALSE}
-packages = c("tidyverse", "mlogit", "haven", "sjlabelled", "Hmisc", "ggcorrplot", "reshape2", "ggplot2")
+packages = c("tidyverse", "mlogit", "haven", "sjlabelled", "reshape2")
 fpackage.check(packages)
 ```
 
@@ -268,7 +265,7 @@ df1. <- df1[which(df1$SAMPLE_ID %in% df2$SAMPLE_ID), ]
 # current involvement
 #df2$V5
 df2$activeW2 <- ifelse(df2$V5 == 1, 0, 1)
-#prop.table(table(df2$activeW2)) #64 percent currently active, at w2
+prop.table(table(df2$activeW2, useNA = "always")) #64 percent currently active, at w2
 
 #number of sports
 #table(df2$V5)
@@ -329,9 +326,8 @@ df <- df2[, c(
   ]
 
 #gender to binary, [0,1]
-df$female <- df$GESLACHT2 - 1
-#X to NA
-df$female <- ifelse(df$female>1, NA, df$female)
+df$female <- ifelse(df$GESLACHT2==1,0,1)
+df$female[is.na(df$female)] <- 1
 
 #attach id
 df$id <- 1:nrow(df)
@@ -341,7 +337,6 @@ df$id <- 1:nrow(df)
 
 # each list element contains the choices for each set. thus presatielist[[2]][3] is the
 # 'presatie'-attribute of person 3, in choice set 2
-
 
 prestatielist <- list()
 prestatielist[[1]] <- c("LoopKeuzesets_1_LoopAlternatieven_1_Prestaties", "LoopKeuzesets_1_LoopAlternatieven_2_Prestaties", "LoopKeuzesets_1_LoopAlternatieven_3_Prestaties")
@@ -365,7 +360,6 @@ esteemlist[[3]] <- c("LoopKeuzesets_3_LoopAlternatieven_1_Aanmoediging", "LoopKe
 
 chosen <- c("V84_LoopKeuzesets_1", "V85_LoopKeuzesets_2", "V86_LoopKeuzesets_3")
 
-
 for (set in 1:3) {
 
   # to long format
@@ -375,13 +369,13 @@ for (set in 1:3) {
         data <- as.data.frame(df)
         data$set <- set
         data$options <- choice 
-        data$prestatie <- data[, names(data) == prestatielist[[set]][choice]]
-        data$kennis <- data[, names(data) == kennislist[[set]][choice]]
-        data$gezellig <- data[, names(data) == gezelliglist[[set]][choice]]
-        data$esteem <- data[, names(data) == esteemlist[[set]][choice]]
+        data$comparison <- data[, names(data) == prestatielist[[set]][choice]]
+        data$knowledge <- data[, names(data) == kennislist[[set]][choice]]
+        data$companionship <- data[, names(data) == gezelliglist[[set]][choice]]
+        data$encouragement <- data[, names(data) == esteemlist[[set]][choice]]
         data$chosen <- data[, names(data) == chosen[set]]
-        data <- data[, names(data) %in% c("id", "female", "activeW2", "activity.index", "sportsfreq", "set", "options", "prestatie", "kennis", "gezellig",
-            "esteem", "chosen")]
+        data <- data[, names(data) %in% c("id", "female", "activeW2", "activity.index", "sportsfreq", "set", "options", "comparison", "knowledge", "companionship",
+            "encouragement", "chosen")]
         if (set == 1 & choice == 1) {
             df_long <- data
         } else {
@@ -397,27 +391,62 @@ df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
 df_long$choice <- (df_long$chosen == c(1, 2, 3)[df_long$options])
 
 #recode number into answer
-df_long$prestatie <- ifelse(df_long$prestatie == 1, "vindt het erg leuk om sport-prestaties te vergelijken",
-                             ifelse(df_long$prestatie == 2, "vindt het enigszins leuk om sport-prestaties te vergelijken",
-                             ifelse(df_long$prestatie == 3, "vindt het niet leuk om sport-prestaties te vergelijken", NA)))
+df_long$comparison <- ifelse(df_long$comparison == 1, "high", #"really likes to compare sports performances",
+                             ifelse(df_long$comparison == 2, "medium", #"somewhat likes to compare sports performances",
+                             ifelse(df_long$comparison == 3, "low", NA))) # "does not like to compare sports performances", NA)))
 
-df_long$kennis <- ifelse(df_long$kennis == 1, "weet meer dan jij van effectieve trainingen en de juiste techniek",
-                             ifelse(df_long$kennis == 2, "weet evenveel als jij van effectieve trainingen en de juiste techniek",
-                             ifelse(df_long$kennis == 3, "weet minder dan jij van effectieve trainingen en de juiste techniek", NA)))
+df_long$knowledge <- ifelse(df_long$knowledge == 1, "high", # "knows more than you about effective training and the right technique",
+                             ifelse(df_long$knowledge == 2, "medium", # "knows as much as you about effective training and the right technique",
+                             ifelse(df_long$knowledge == 3, "low", NA))) # "knows less than you about effective training and the right technique", NA)))
 
-df_long$gezellig <- ifelse(df_long$gezellig == 1, "sport voor de gezelligheid",
-                             ifelse(df_long$gezellig == 2, "wil een combi van gezellig en serieus sporten",
-                             ifelse(df_long$gezellig == 3, "	wil voornamelijk serieus sporten", NA)))
+df_long$companionship <- ifelse(df_long$companionship == 1, "high", # "exercises to socially engage",
+                             ifelse(df_long$companionship == 2, "medium", #"wants a combination of social interaction and purposeful training",
+                             ifelse(df_long$companionship == 3, "low", NA))) #"exercises purposefully and seriously", NA)))
 
-df_long$esteem <- ifelse(df_long$esteem == 1, "moedigt je vaak aan",
-                             ifelse(df_long$esteem == 2, "moedigt je soms aan",
-                             ifelse(df_long$esteem == 3, "moedigt je nooit aan", NA)))
+df_long$encouragement <- ifelse(df_long$encouragement == 1, "high", # "always encourages you",
+                             ifelse(df_long$encouragement == 2, "medium", # "sometimes encourages you",
+                             ifelse(df_long$encouragement == 3, "low", NA))) # "never encourages you", NA)))
 
 row.names(df_long) <- 1:nrow(df_long)
-#fix(df_long)
 
-cor(df$female,df$activeW2, use="complete.obs")
-?cor
+#set NAs on frequency to 0
+df_long$sportsfreq[is.na(df_long$sportsfreq)] <- 0
+
+#manually make interaction variables
+#GENDER
+df_long$comparisonhigh.FEMALE <- ifelse(df_long$comparison=="high" & df_long$female==1, 1,0)
+df_long$comparisonmedium.FEMALE <- ifelse(df_long$comparison=="medium" & df_long$female==1, 1,0)
+df_long$comparisonlow.FEMALE <- ifelse(df_long$comparison=="low" & df_long$female==1, 1,0)
+
+df_long$knowledgehigh.FEMALE <- ifelse(df_long$knowledge=="high" & df_long$female==1, 1,0)
+df_long$knowledgemedium.FEMALE <- ifelse(df_long$knowledge=="medium" & df_long$female==1, 1,0)
+df_long$knowledgelow.FEMALE <- ifelse(df_long$knowledge=="low" & df_long$female==1, 1,0)
+
+df_long$companionshiphigh.FEMALE <- ifelse(df_long$companionship=="high" & df_long$female==1, 1,0)
+df_long$companionshipmedium.FEMALE <- ifelse(df_long$companionship=="medium" & df_long$female==1, 1,0)
+df_long$companionshiplow.FEMALE <- ifelse(df_long$companionship=="low" & df_long$female==1, 1,0)
+
+df_long$encouragementhigh.FEMALE <- ifelse(df_long$encouragement=="high" & df_long$female==1, 1,0)
+df_long$encouragementmedium.FEMALE <- ifelse(df_long$encouragement=="medium" & df_long$female==1, 1,0)
+df_long$encouragementlow.FEMALE <- ifelse(df_long$encouragement=="low" & df_long$female==1, 1,0)
+
+#ACTIVE (YES/NO)
+df_long$comparisonhigh.ACTIVE <- ifelse(df_long$comparison=="high" & df_long$activeW2==1, 1,0)
+df_long$comparisonmedium.ACTIVE <- ifelse(df_long$comparison=="medium" & df_long$activeW2==1, 1,0)
+df_long$comparisonlow.ACTIVE <- ifelse(df_long$comparison=="low" & df_long$activeW2==1, 1,0)
+
+df_long$knowledgehigh.ACTIVE <- ifelse(df_long$knowledge=="high" & df_long$activeW2==1, 1,0)
+df_long$knowledgemedium.ACTIVE <- ifelse(df_long$knowledge=="medium" & df_long$activeW2==1, 1,0)
+df_long$knowledgelow.ACTIVE <- ifelse(df_long$knowledge=="low" & df_long$activeW2==1, 1,0)
+
+df_long$companionshiphigh.ACTIVE <- ifelse(df_long$companionship=="high" & df_long$activeW2==1, 1,0)
+df_long$companionshipmedium.ACTIVE <- ifelse(df_long$companionship=="medium" & df_long$activeW2==1, 1,0)
+df_long$companionshiplow.ACTIVE <- ifelse(df_long$companionship=="low" & df_long$activeW2==1, 1,0)
+
+df_long$encouragementhigh.ACTIVE <- ifelse(df_long$encouragement=="high" & df_long$activeW2==1, 1,0)
+df_long$encouragementmedium.ACTIVE <- ifelse(df_long$encouragement=="medium" & df_long$activeW2==1, 1,0)
+df_long$encouragementlow.ACTIVE <- ifelse(df_long$encouragement=="low" & df_long$activeW2==1, 1,0)
+
 ```
 
 <!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) 
@@ -431,8 +460,8 @@ perhaps i need to use wave 1...
 ```{r, eval=F}
 # first we need an id_alt (identification of alternatives), thus specific combi of facets
 {
-    df_long$id_alt <- as.numeric(as.factor(trimws(df_long$prestatie))) * 1000 + as.numeric(as.factor(trimws(df_long$kennis))) *
-        100 + as.numeric(as.factor(trimws(df_long$gezellig))) * 10 + as.numeric(as.factor(trimws(df_long$esteem)))
+    df_long$id_alt <- as.numeric(as.factor(trimws(df_long$comparison))) * 1000 + as.numeric(as.factor(trimws(df_long$knowledge))) *
+        100 + as.numeric(as.factor(trimws(df_long$companionship))) * 10 + as.numeric(as.factor(trimws(df_long$encouragement)))
 
 }
 
@@ -454,10 +483,11 @@ sum(dups)
 #head(df_long)
 
 # and with no duplicates and no choice sets without choices, this should work 
-df_long$sportsfreq[is.na(df_long$sportsfreq)] <- 0
-
 df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long")
 ```
+
+
+
 
 <br>
 

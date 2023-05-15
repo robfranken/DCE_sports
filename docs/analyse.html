@@ -41,8 +41,6 @@
 <link href="site_libs/primer-tooltips-1.4.0/build.css" rel="stylesheet" />
 <link href="site_libs/klippy-0.0.0.9500/css/klippy.min.css" rel="stylesheet" />
 <script src="site_libs/klippy-0.0.0.9500/js/klippy.min.js"></script>
-<script src="site_libs/kePrint-0.0.1/kePrint.js"></script>
-<link href="site_libs/lightable-0.0.1/lightable.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/all.css" rel="stylesheet" />
 <link href="site_libs/font-awesome-5.1.0/css/v4-shims.css" rel="stylesheet" />
 
@@ -462,7 +460,7 @@ packages</h2>
 <li><code>knitr</code>: generating tables</li>
 <li><code>kableExtra</code>: manipulating tables</li>
 </ul>
-<pre class="r test"><code>packages = c(&quot;tidyverse&quot;, &quot;mlogit&quot;, &quot;knitr&quot;, &quot;kableExtra&quot;)
+<pre class="r test"><code>packages = c(&quot;tidyverse&quot;, &quot;mlogit&quot;, &quot;knitr&quot;, &quot;kableExtra&quot;, &quot;stargazer&quot;)
 fpackage.check(packages)</code></pre>
 <p><br></p>
 </div>
@@ -473,219 +471,134 @@ data</h2>
 today &lt;- gsub(&quot;-&quot;, &quot;&quot;, Sys.Date())
 
 io_ml &lt;- fload(paste0(&quot;./data/processed/&quot;,today,&quot;io_ml.RData&quot;))
+
 rm (today)</code></pre>
 <p><br></p>
 </div>
 </div>
 <div id="run-model" class="section level1" number="2">
 <h1><span class="header-section-number">2</span> run model</h1>
-<pre class="r test"><code>#main model
+<pre class="r test"><code>#main
+m1 &lt;- mlogit(choice ~ comparison + knowledge + companionship + encouragement | 0, data = io_ml)
+#summary(m1)
 
-class(io_ml)
+#interaction with gender
+m2 &lt;- mlogit(choice ~ comparison + knowledge + companionship + encouragement + comparisonlow.FEMALE + comparisonmedium.FEMALE + knowledgelow.FEMALE + knowledgemedium.FEMALE + companionshiplow.FEMALE + companionshipmedium.FEMALE + encouragementlow.FEMALE + encouragementmedium.FEMALE | 0, data = io_ml)
+#summary(m2)
 
-m1 &lt;- mlogit(choice ~ prestatie + kennis + gezellig + esteem | 0, data = io_ml)
-summary(m1)
-save(m1,file=&quot;./results/io_m1.RData&quot;)</code></pre>
+#interaciton with active (yes/no)
+m3 &lt;- mlogit(choice ~ comparison + knowledge + companionship + encouragement + comparisonlow.ACTIVE + comparisonmedium.ACTIVE + knowledgelow.ACTIVE + knowledgemedium.ACTIVE + companionshiplow.ACTIVE + companionshipmedium.ACTIVE + encouragementlow.ACTIVE + encouragementmedium.ACTIVE | 0, data = io_ml)
+#summary(m3)
+
+#save outpput in html table
+##stargazer(m1,m2,m3, type=&quot;text&quot;)
+
+stargazer(m1,m2,m3, 
+          type=&quot;html&quot;, 
+          title=&quot;Multinomial logit model results&quot;, 
+          dep.var.labels = &quot;Sports partner choice&quot;,
+          covariate.labels = c(&quot;does not like to compare sports performances&quot;, &quot;somewhat likes to compare sports performances&quot;, 
+                               &quot;knows less than you about effective training and the right technique&quot;, &quot;knows as much as you about effective training and the right technique&quot;,
+                               &quot;exercises purposefully and seriously&quot;, &quot;wants a combination of social interaction and purposeful training&quot;,
+                               &quot;never encourages you&quot;, &quot;sometimes encourages you&quot;, 
+                               paste0(c(&quot;does not like to compare sports performances&quot;, &quot;somewhat likes to compare sports performances&quot;, 
+                               &quot;knows less than you about effective training and the right technique&quot;, &quot;knows as much as you about effective training and the right technique&quot;,
+                               &quot;exercises purposefully and seriously&quot;, &quot;wants a combination of social interaction and purposeful training&quot;,
+                               &quot;never encourages you&quot;, &quot;sometimes encourages you&quot;),&quot;*female&quot;),
+                               paste0(c(&quot;does not like to compare sports performances&quot;, &quot;somewhat likes to compare sports performances&quot;, 
+                               &quot;knows less than you about effective training and the right technique&quot;, &quot;knows as much as you about effective training and the right technique&quot;,
+                               &quot;exercises purposefully and seriously&quot;, &quot;wants a combination of social interaction and purposeful training&quot;,
+                               &quot;never encourages you&quot;, &quot;sometimes encourages you&quot;),&quot;*active&quot;)),
+          single.row=FALSE, align = TRUE, digits=2, out = &quot;./results/models.html&quot;)</code></pre>
 <p><br></p>
-<div id="output" class="section level2" number="2.1">
-<h2><span class="header-section-number">2.1</span> output</h2>
-<pre class="r fold-hide"><code>ans_io &lt;- fload(&quot;./results/io_m1.RData&quot;)
-test &lt;- summary(ans_io)
+</div>
+<div id="output" class="section level1" number="3">
+<h1><span class="header-section-number">3</span> output</h1>
 
-res &lt;- as_tibble(round(test$CoefTable, 3), rownames = &quot;vars&quot;)
-res$vars[1] &lt;- &quot;Comparison: really likes to compare sports performances&quot;
-res$vars[2] &lt;- &quot;Comparison: does not like to compare sports performances&quot;
-
-res$vars[3] &lt;- &quot;Knowledge: knows more than you about effective training and the right technique&quot;
-res$vars[4] &lt;- &quot;Knowledge: knows less than you about effective training and the right technique&quot;
-
-res$vars[5] &lt;- &quot;Social: exercises for fun and enjoyment&quot;
-res$vars[6] &lt;- &quot;Social: wants a combination of joyful and purposeful training&quot;
-
-res$vars[7] &lt;- &quot;Encouragement: sometimes encourages you&quot;
-res$vars[8] &lt;- &quot;Encouragement: often encourages you&quot;
-
-names(res)[1] &lt;- &quot;&quot;
-
-names(res)[2] &lt;- &quot;Log-odds&quot;
-
-knitr::kable(res, digits=3, &quot;html&quot;,  caption=&quot;Conditional logit model: preferences for sports partner attributes in I&amp;O panel&quot;) %&gt;%
-  kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;))</code></pre>
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>
-Conditional logit model: preferences for sports partner attributes in
-I&amp;O panel
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Log-odds
-</th>
-<th style="text-align:right;">
-Std. Error
-</th>
-<th style="text-align:right;">
-z-value
-</th>
-<th style="text-align:right;">
-Pr(&gt;|z|)
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Comparison: really likes to compare sports performances
-</td>
-<td style="text-align:right;">
--0.644
-</td>
-<td style="text-align:right;">
-0.034
-</td>
-<td style="text-align:right;">
--18.915
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Comparison: does not like to compare sports performances
-</td>
-<td style="text-align:right;">
--0.186
-</td>
-<td style="text-align:right;">
-0.033
-</td>
-<td style="text-align:right;">
--5.692
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows more than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.019
-</td>
-<td style="text-align:right;">
-0.032
-</td>
-<td style="text-align:right;">
--0.591
-</td>
-<td style="text-align:right;">
-0.554
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows less than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.720
-</td>
-<td style="text-align:right;">
-0.035
-</td>
-<td style="text-align:right;">
--20.862
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: exercises for fun and enjoyment
-</td>
-<td style="text-align:right;">
-0.649
-</td>
-<td style="text-align:right;">
-0.035
-</td>
-<td style="text-align:right;">
-18.424
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: wants a combination of joyful and purposeful training
-</td>
-<td style="text-align:right;">
-1.222
-</td>
-<td style="text-align:right;">
-0.036
-</td>
-<td style="text-align:right;">
-34.335
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: sometimes encourages you
-</td>
-<td style="text-align:right;">
-1.044
-</td>
-<td style="text-align:right;">
-0.036
-</td>
-<td style="text-align:right;">
-29.112
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: often encourages you
-</td>
-<td style="text-align:right;">
-1.125
-</td>
-<td style="text-align:right;">
-0.036
-</td>
-<td style="text-align:right;">
-31.275
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-</tbody>
+<table style="text-align:center"><caption><strong>Multinomial logit model results</strong></caption>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"></td><td colspan="3"><em>Dependent variable:</em></td></tr>
+<tr><td></td><td colspan="3" style="border-bottom: 1px solid black"></td></tr>
+<tr><td style="text-align:left"></td><td colspan="3">Sports partner choice</td></tr>
+<tr><td style="text-align:left"></td><td>(1)</td><td>(2)</td><td>(3)</td></tr>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">does not like to compare sports performances</td><td>0.46<sup>***</sup></td><td>0.02</td><td>0.65<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.03)</td><td>(0.06)</td><td>(0.06)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">somewhat likes to compare sports performances</td><td>0.64<sup>***</sup></td><td>0.47<sup>***</sup></td><td>0.68<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.03)</td><td>(0.06)</td><td>(0.06)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">knows less than you about effective training and the right technique</td><td>-0.70<sup>***</sup></td><td>-0.64<sup>***</sup></td><td>-0.66<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.03)</td><td>(0.06)</td><td>(0.06)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">knows as much as you about effective training and the right technique</td><td>0.02</td><td>0.08</td><td>0.06</td></tr>
+<tr><td style="text-align:left"></td><td>(0.03)</td><td>(0.05)</td><td>(0.05)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">exercises purposefully and seriously</td><td>-0.65<sup>***</sup></td><td>-0.53<sup>***</sup></td><td>-1.10<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.04)</td><td>(0.06)</td><td>(0.06)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">wants a combination of social interaction and purposeful training</td><td>0.57<sup>***</sup></td><td>0.59<sup>***</sup></td><td>0.20<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.03)</td><td>(0.05)</td><td>(0.05)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">never encourages you</td><td>-1.13<sup>***</sup></td><td>-0.96<sup>***</sup></td><td>-0.90<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td>(0.04)</td><td>(0.06)</td><td>(0.06)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">sometimes encourages you</td><td>-0.08<sup>**</sup></td><td>-0.03</td><td>-0.04</td></tr>
+<tr><td style="text-align:left"></td><td>(0.03)</td><td>(0.05)</td><td>(0.05)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">does not like to compare sports performances*female</td><td></td><td>0.68<sup>***</sup></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">somewhat likes to compare sports performances*female</td><td></td><td>0.29<sup>***</sup></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">knows less than you about effective training and the right technique*female</td><td></td><td>-0.10</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">knows as much as you about effective training and the right technique*female</td><td></td><td>-0.09</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">exercises purposefully and seriously*female</td><td></td><td>-0.20<sup>***</sup></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">wants a combination of social interaction and purposeful training*female</td><td></td><td>-0.02</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">never encourages you*female</td><td></td><td>-0.27<sup>***</sup></td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">sometimes encourages you*female</td><td></td><td>-0.08</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td>(0.07)</td><td></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">does not like to compare sports performances*active</td><td></td><td></td><td>-0.30<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">somewhat likes to compare sports performances*active</td><td></td><td></td><td>-0.04</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">knows less than you about effective training and the right technique*active</td><td></td><td></td><td>-0.07</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">knows as much as you about effective training and the right technique*active</td><td></td><td></td><td>-0.06</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">exercises purposefully and seriously*active</td><td></td><td></td><td>0.70<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">wants a combination of social interaction and purposeful training*active</td><td></td><td></td><td>0.60<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">never encourages you*active</td><td></td><td></td><td>-0.37<sup>***</sup></td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td style="text-align:left">sometimes encourages you*active</td><td></td><td></td><td>-0.07</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td>(0.07)</td></tr>
+<tr><td style="text-align:left"></td><td></td><td></td><td></td></tr>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left">Observations</td><td>9,618</td><td>9,618</td><td>9,618</td></tr>
+<tr><td style="text-align:left">Log Likelihood</td><td>-8,871.96</td><td>-8,815.98</td><td>-8,787.71</td></tr>
+<tr><td colspan="4" style="border-bottom: 1px solid black"></td></tr><tr><td style="text-align:left"><em>Note:</em></td><td colspan="3" style="text-align:right"><sup>*</sup>p<0.1; <sup>**</sup>p<0.05; <sup>***</sup>p<0.01</td></tr>
 </table>
 <p><br></p>
-<!----
-
-To-do:
-
-- Present average semi-elasticities for all levels in contrast to the grand mean. Grand mean reflects the decision probability for one of the three sports partners if the respondent has no preferences (thus, a base probability of 1/3, which is set to zero). Accordingly, the positive effect - displayed to the right of the zero line on the x-axis - indicates that people are, on average, more likely to choose a sports partner if they have the respective attribute. And an effect displayed to the left of the zero line indicates people are less likely to choose a sports partner if it has the respective attribute. Whiskers represent 95% confident intervals.
-
-<br>
--->
-<div id="observations" class="section level3" number="2.1.1">
-<h3><span class="header-section-number">2.1.1</span> observations</h3>
+<div id="observations" class="section level3" number="3.0.1">
+<h3><span class="header-section-number">3.0.1</span> observations</h3>
 <ol style="list-style-type: decimal">
 <li><p>Comparison: respondents prefer a sports partner who places an
 appropriate amount of emphasis on social comparison — not too much and
@@ -698,402 +611,6 @@ exercising for fun over doing so solely seriously</p></li>
 <li><p>Encouragement: respondents prefer a sports partner that regularly
 encourages them.</p></li>
 </ol>
-<p><br></p>
-<hr />
-</div>
-</div>
-</div>
-<div id="subgroup-analyses" class="section level1" number="3">
-<h1><span class="header-section-number">3</span> subgroup analyses</h1>
-<div id="male-vs.-female" class="section level2 tabset tabset-fade"
-number="3.1">
-<h2 class="tabset tabset-fade"><span
-class="header-section-number">3.1</span> male vs. female</h2>
-<div id="males" class="section level3" number="3.1.1">
-<h3><span class="header-section-number">3.1.1</span> males</h3>
-<pre class="r test"><code>io_ml_m &lt;- io_ml[which(io_ml$female==0),]
-mm &lt;- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_m)
-save(mm,file=&quot;./results/io_m1_males.RData&quot;)</code></pre>
-<pre class="r fold-hide"><code>ans_io &lt;- fload(&quot;./results/io_m1_males.RData&quot;)
-test &lt;- summary(ans_io)
-
-resm &lt;- as_tibble(round(test$CoefTable, 3), rownames = &quot;vars&quot;)
-resm$vars[1] &lt;- &quot;Comparison: really likes to compare sports performances&quot;
-resm$vars[2] &lt;- &quot;Comparison: does not like to compare sports performances&quot;
-
-resm$vars[3] &lt;- &quot;Knowledge: knows more than you about effective training and the right technique&quot;
-resm$vars[4] &lt;- &quot;Knowledge: knows less than you about effective training and the right technique&quot;
-
-resm$vars[5] &lt;- &quot;Social: exercises for fun and enjoyment&quot;
-resm$vars[6] &lt;- &quot;Social: wants a combination of joyful and purposeful training&quot;
-
-resm$vars[7] &lt;- &quot;Encouragement: sometimes encourages you&quot;
-resm$vars[8] &lt;- &quot;Encouragement: often encourages you&quot;
-
-names(resm)[1] &lt;- &quot;&quot;
-names(res)[2] &lt;- &quot;Log-odds&quot;
-
-knitr::kable(resm, digits=3, &quot;html&quot;,  caption=&quot;Conditional logit model: preferences for sports partner attributes among males in I&amp;O panel&quot;) %&gt;%
-  kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;))</code></pre>
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>
-Conditional logit model: preferences for sports partner attributes among
-males in I&amp;O panel
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Estimate
-</th>
-<th style="text-align:right;">
-Std. Error
-</th>
-<th style="text-align:right;">
-z-value
-</th>
-<th style="text-align:right;">
-Pr(&gt;|z|)
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Comparison: really likes to compare sports performances
-</td>
-<td style="text-align:right;">
--0.469
-</td>
-<td style="text-align:right;">
-0.056
-</td>
-<td style="text-align:right;">
--8.411
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Comparison: does not like to compare sports performances
-</td>
-<td style="text-align:right;">
--0.445
-</td>
-<td style="text-align:right;">
-0.056
-</td>
-<td style="text-align:right;">
--7.935
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows more than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.076
-</td>
-<td style="text-align:right;">
-0.054
-</td>
-<td style="text-align:right;">
--1.399
-</td>
-<td style="text-align:right;">
-0.162
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows less than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.720
-</td>
-<td style="text-align:right;">
-0.058
-</td>
-<td style="text-align:right;">
--12.464
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: exercises for fun and enjoyment
-</td>
-<td style="text-align:right;">
-0.525
-</td>
-<td style="text-align:right;">
-0.059
-</td>
-<td style="text-align:right;">
-8.950
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: wants a combination of joyful and purposeful training
-</td>
-<td style="text-align:right;">
-1.115
-</td>
-<td style="text-align:right;">
-0.059
-</td>
-<td style="text-align:right;">
-18.868
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: sometimes encourages you
-</td>
-<td style="text-align:right;">
-0.930
-</td>
-<td style="text-align:right;">
-0.060
-</td>
-<td style="text-align:right;">
-15.480
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: often encourages you
-</td>
-<td style="text-align:right;">
-0.959
-</td>
-<td style="text-align:right;">
-0.060
-</td>
-<td style="text-align:right;">
-16.090
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="females" class="section level3" number="3.1.2">
-<h3><span class="header-section-number">3.1.2</span> females</h3>
-<pre class="r test"><code>io_ml_f &lt;- io_ml[which(io_ml$female==1),]
-mf &lt;- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_f)
-save(mf,file=&quot;./results/io_m1_females.RData&quot;)</code></pre>
-<pre class="r fold-hide"><code>ans_io &lt;- fload(&quot;./results/io_m1_females.RData&quot;)
-test &lt;- summary(ans_io)
-
-resf &lt;- as_tibble(round(test$CoefTable, 3), rownames = &quot;vars&quot;)
-resf$vars[1] &lt;- &quot;Comparison: really likes to compare sports performances&quot;
-resf$vars[2] &lt;- &quot;Comparison: does not like to compare sports performances&quot;
-
-resf$vars[3] &lt;- &quot;Knowledge: knows more than you about effective training and the right technique&quot;
-resf$vars[4] &lt;- &quot;Knowledge: knows less than you about effective training and the right technique&quot;
-
-resf$vars[5] &lt;- &quot;Social: exercises for fun and enjoyment&quot;
-resf$vars[6] &lt;- &quot;Social: wants a combination of joyful and purposeful training&quot;
-
-resf$vars[7] &lt;- &quot;Encouragement: sometimes encourages you&quot;
-resf$vars[8] &lt;- &quot;Encouragement: often encourages you&quot;
-
-names(resf)[1] &lt;- &quot;&quot;
-names(res)[2] &lt;- &quot;Log-odds&quot;
-
-knitr::kable(resf, digits=3, &quot;html&quot;,  caption=&quot;Conditional logit model: preferences for sports partner attributes among females in I&amp;O panel&quot;) %&gt;%
-  kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;))</code></pre>
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>
-Conditional logit model: preferences for sports partner attributes among
-females in I&amp;O panel
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Estimate
-</th>
-<th style="text-align:right;">
-Std. Error
-</th>
-<th style="text-align:right;">
-z-value
-</th>
-<th style="text-align:right;">
-Pr(&gt;|z|)
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Comparison: really likes to compare sports performances
-</td>
-<td style="text-align:right;">
--0.752
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-<td style="text-align:right;">
--17.331
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Comparison: does not like to compare sports performances
-</td>
-<td style="text-align:right;">
--0.048
-</td>
-<td style="text-align:right;">
-0.040
-</td>
-<td style="text-align:right;">
--1.196
-</td>
-<td style="text-align:right;">
-0.232
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows more than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
-0.020
-</td>
-<td style="text-align:right;">
-0.040
-</td>
-<td style="text-align:right;">
-0.499
-</td>
-<td style="text-align:right;">
-0.618
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows less than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.721
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-<td style="text-align:right;">
--16.615
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: exercises for fun and enjoyment
-</td>
-<td style="text-align:right;">
-0.722
-</td>
-<td style="text-align:right;">
-0.044
-</td>
-<td style="text-align:right;">
-16.262
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: wants a combination of joyful and purposeful training
-</td>
-<td style="text-align:right;">
-1.294
-</td>
-<td style="text-align:right;">
-0.045
-</td>
-<td style="text-align:right;">
-28.745
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: sometimes encourages you
-</td>
-<td style="text-align:right;">
-1.121
-</td>
-<td style="text-align:right;">
-0.045
-</td>
-<td style="text-align:right;">
-24.816
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: often encourages you
-</td>
-<td style="text-align:right;">
-1.231
-</td>
-<td style="text-align:right;">
-0.046
-</td>
-<td style="text-align:right;">
-27.009
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="section" class="section level2 unlisted unnumbered">
-<h2 class="unlisted unnumbered"></h2>
 <p>Both genders won’t choose a sports partner who places great emphasis
 on social comparison and competition. However, males generally prefer a
 sports partner who places some emphasis on social comparison, whereas
@@ -1102,396 +619,6 @@ who places little or no emphasis on social comparison. In line with the
 idea that male sports participation is driven to a greater extent by
 status/competition than females (who were expected to be more driven by
 affiliation, which is not apparent from the model results).</p>
-</div>
-<div id="currently-active" class="section level2 tabset tabset-fade"
-number="3.2">
-<h2 class="tabset tabset-fade"><span
-class="header-section-number">3.2</span> currently active</h2>
-<div id="yes" class="section level3" number="3.2.1">
-<h3><span class="header-section-number">3.2.1</span> yes</h3>
-<pre class="r test"><code>io_ml_active &lt;- io_ml[which(io_ml$activeW2==1),]
-ma &lt;- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_active)
-save(ma,file=&quot;./results/io_m1_actives.RData&quot;)</code></pre>
-<pre class="r fold-hide"><code>ans_io &lt;- fload(&quot;./results/io_m1_actives.RData&quot;)
-test &lt;- summary(ans_io)
-
-resf &lt;- as_tibble(round(test$CoefTable, 3), rownames = &quot;vars&quot;)
-resf$vars[1] &lt;- &quot;Comparison: really likes to compare sports performances&quot;
-resf$vars[2] &lt;- &quot;Comparison: does not like to compare sports performances&quot;
-
-resf$vars[3] &lt;- &quot;Knowledge: knows more than you about effective training and the right technique&quot;
-resf$vars[4] &lt;- &quot;Knowledge: knows less than you about effective training and the right technique&quot;
-
-resf$vars[5] &lt;- &quot;Social: exercises for fun and enjoyment&quot;
-resf$vars[6] &lt;- &quot;Social: wants a combination of joyful and purposeful training&quot;
-
-resf$vars[7] &lt;- &quot;Encouragement: sometimes encourages you&quot;
-resf$vars[8] &lt;- &quot;Encouragement: often encourages you&quot;
-
-names(resf)[1] &lt;- &quot;&quot;
-names(resf)[2] &lt;- &quot;Log-odds&quot;
-
-knitr::kable(resf, digits=3, &quot;html&quot;,  caption=&quot;Conditional logit model: preferences for sports partner attributes among I&amp;O panel respondents who are currently active in sports.&quot;) %&gt;%
-  kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;))</code></pre>
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>
-Conditional logit model: preferences for sports partner attributes among
-I&amp;O panel respondents who are currently active in sports.
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Log-odds
-</th>
-<th style="text-align:right;">
-Std. Error
-</th>
-<th style="text-align:right;">
-z-value
-</th>
-<th style="text-align:right;">
-Pr(&gt;|z|)
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Comparison: really likes to compare sports performances
-</td>
-<td style="text-align:right;">
--0.633
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-<td style="text-align:right;">
--14.837
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Comparison: does not like to compare sports performances
-</td>
-<td style="text-align:right;">
--0.282
-</td>
-<td style="text-align:right;">
-0.041
-</td>
-<td style="text-align:right;">
--6.865
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows more than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
-0.004
-</td>
-<td style="text-align:right;">
-0.041
-</td>
-<td style="text-align:right;">
-0.098
-</td>
-<td style="text-align:right;">
-0.922
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows less than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.729
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-<td style="text-align:right;">
--16.802
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: exercises for fun and enjoyment
-</td>
-<td style="text-align:right;">
-0.399
-</td>
-<td style="text-align:right;">
-0.044
-</td>
-<td style="text-align:right;">
-9.078
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: wants a combination of joyful and purposeful training
-</td>
-<td style="text-align:right;">
-1.196
-</td>
-<td style="text-align:right;">
-0.044
-</td>
-<td style="text-align:right;">
-27.053
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: sometimes encourages you
-</td>
-<td style="text-align:right;">
-1.160
-</td>
-<td style="text-align:right;">
-0.046
-</td>
-<td style="text-align:right;">
-25.402
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: often encourages you
-</td>
-<td style="text-align:right;">
-1.271
-</td>
-<td style="text-align:right;">
-0.046
-</td>
-<td style="text-align:right;">
-27.621
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-<div id="no" class="section level3" number="3.2.2">
-<h3><span class="header-section-number">3.2.2</span> no</h3>
-<pre class="r test"><code>io_ml_inactive &lt;- io_ml[which(io_ml$activeW2==0),]
-mna &lt;- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_inactive)
-save(mf,file=&quot;./results/io_m1_inactives.RData&quot;)</code></pre>
-<pre class="r fold-hide"><code>ans_io &lt;- fload(&quot;./results/io_m1_inactives.RData&quot;)
-test &lt;- summary(ans_io)
-
-resf &lt;- as_tibble(round(test$CoefTable, 3), rownames = &quot;vars&quot;)
-resf$vars[1] &lt;- &quot;Comparison: really likes to compare sports performances&quot;
-resf$vars[2] &lt;- &quot;Comparison: does not like to compare sports performances&quot;
-
-resf$vars[3] &lt;- &quot;Knowledge: knows more than you about effective training and the right technique&quot;
-resf$vars[4] &lt;- &quot;Knowledge: knows less than you about effective training and the right technique&quot;
-
-resf$vars[5] &lt;- &quot;Social: exercises for fun and enjoyment&quot;
-resf$vars[6] &lt;- &quot;Social: wants a combination of joyful and purposeful training&quot;
-
-resf$vars[7] &lt;- &quot;Encouragement: sometimes encourages you&quot;
-resf$vars[8] &lt;- &quot;Encouragement: often encourages you&quot;
-
-names(resf)[1] &lt;- &quot;&quot;
-names(resf)[2] &lt;- &quot;Log-odds&quot;
-
-knitr::kable(resf, digits=3, &quot;html&quot;,  caption=&quot;Conditional logit model: preferences for sports partner attributes among I&amp;O panel respondents who are currently not active in sports.&quot;) %&gt;%
-  kableExtra::kable_styling(bootstrap_options = c(&quot;striped&quot;, &quot;hover&quot;))</code></pre>
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>
-Conditional logit model: preferences for sports partner attributes among
-I&amp;O panel respondents who are currently not active in sports.
-</caption>
-<thead>
-<tr>
-<th style="text-align:left;">
-</th>
-<th style="text-align:right;">
-Log-odds
-</th>
-<th style="text-align:right;">
-Std. Error
-</th>
-<th style="text-align:right;">
-z-value
-</th>
-<th style="text-align:right;">
-Pr(&gt;|z|)
-</th>
-</tr>
-</thead>
-<tbody>
-<tr>
-<td style="text-align:left;">
-Comparison: really likes to compare sports performances
-</td>
-<td style="text-align:right;">
--0.752
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-<td style="text-align:right;">
--17.331
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Comparison: does not like to compare sports performances
-</td>
-<td style="text-align:right;">
--0.048
-</td>
-<td style="text-align:right;">
-0.040
-</td>
-<td style="text-align:right;">
--1.196
-</td>
-<td style="text-align:right;">
-0.232
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows more than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
-0.020
-</td>
-<td style="text-align:right;">
-0.040
-</td>
-<td style="text-align:right;">
-0.499
-</td>
-<td style="text-align:right;">
-0.618
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Knowledge: knows less than you about effective training and the right
-technique
-</td>
-<td style="text-align:right;">
--0.721
-</td>
-<td style="text-align:right;">
-0.043
-</td>
-<td style="text-align:right;">
--16.615
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: exercises for fun and enjoyment
-</td>
-<td style="text-align:right;">
-0.722
-</td>
-<td style="text-align:right;">
-0.044
-</td>
-<td style="text-align:right;">
-16.262
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Social: wants a combination of joyful and purposeful training
-</td>
-<td style="text-align:right;">
-1.294
-</td>
-<td style="text-align:right;">
-0.045
-</td>
-<td style="text-align:right;">
-28.745
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: sometimes encourages you
-</td>
-<td style="text-align:right;">
-1.121
-</td>
-<td style="text-align:right;">
-0.045
-</td>
-<td style="text-align:right;">
-24.816
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-<tr>
-<td style="text-align:left;">
-Encouragement: often encourages you
-</td>
-<td style="text-align:right;">
-1.231
-</td>
-<td style="text-align:right;">
-0.046
-</td>
-<td style="text-align:right;">
-27.009
-</td>
-<td style="text-align:right;">
-0.000
-</td>
-</tr>
-</tbody>
-</table>
-</div>
-</div>
-<div id="section-1" class="section level2 unlisted unnumbered">
-<h2 class="unlisted unnumbered"></h2>
 <p>Similar pattern: those currently active prefer sports partners who
 place an appropriate amount of emphasis on social comparison (not too
 much, not too little). Those currently inactive do not: they dislike
@@ -1501,382 +628,10 @@ expectation. Currently, no notable difference in importance of
 social-emotional motives (i.e., encouragement, affiliation).</p>
 <p>Note that the genders do hardly differ in whether or not they are
 currently active [r(female, active) &lt; -0.02].</p>
-<!---
---------------------
-
-
-<br>
-<br>
-
-------------------
-
-
-# interactions 
-
-
-```{.r .test}
-#interaction model
-
-
-str(io_ml)
-m2 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | female, data = io_ml)
-summary(m2)
-
-m2 <- mlogit(choice ~ prestatie + kennis + gezellig + esteem | female, data = io_ml, method = "bhhh")
-
-save(m2,file="./results/io_m2.RData")
-
-mlogit(choice ~ x | z + x:z, data = your_dataset)
-```
-
-
-
-
-
-
-Test interactions quick 'n dirty: subset data per group and estimate different models
-
-## gender {.tabset .tabset-fade}
-
-### females 
-
-
-```{.r .test}
-io_ml_f <- io_ml[which(io_ml$female==1),]
-mf <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_f)
-save(mf,file="./results/io_m1_females.RData")
-```
-
-
-```{.r .fold-hide}
-ans_io <- fload("./results/io_m1_females.RData")
-test <- summary(ans_io)
-
-resf <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
-resf$vars[1] <- "Comparison: really likes to compare sports performances"
-resf$vars[2] <- "Comparison: does not like to compare sports performances"
-
-resf$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
-resf$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
-
-resf$vars[5] <- "Social: exercises for fun and enjoyment"
-resf$vars[6] <- "Social: wants a combination of joyful and purposeful training"
-
-resf$vars[7] <- "Encouragement: sometimes encourages you"
-resf$vars[8] <- "Encouragement: often encourages you"
-
-names(resf)[1] <- ""
-
-knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among females in I&O panel") %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
-```
-
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>Conditional logit model: preferences for sports partner attributes among females in I&amp;O panel</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;">  </th>
-   <th style="text-align:right;"> Estimate </th>
-   <th style="text-align:right;"> Std. Error </th>
-   <th style="text-align:right;"> z-value </th>
-   <th style="text-align:right;"> Pr(&gt;|z|) </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> Comparison: really likes to compare sports performances </td>
-   <td style="text-align:right;"> -0.752 </td>
-   <td style="text-align:right;"> 0.043 </td>
-   <td style="text-align:right;"> -17.331 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Comparison: does not like to compare sports performances </td>
-   <td style="text-align:right;"> -0.048 </td>
-   <td style="text-align:right;"> 0.040 </td>
-   <td style="text-align:right;"> -1.196 </td>
-   <td style="text-align:right;"> 0.232 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Knowledge: knows more than you about effective training and the right technique </td>
-   <td style="text-align:right;"> 0.020 </td>
-   <td style="text-align:right;"> 0.040 </td>
-   <td style="text-align:right;"> 0.499 </td>
-   <td style="text-align:right;"> 0.618 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Knowledge: knows less than you about effective training and the right technique </td>
-   <td style="text-align:right;"> -0.721 </td>
-   <td style="text-align:right;"> 0.043 </td>
-   <td style="text-align:right;"> -16.615 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Social: exercises for fun and enjoyment </td>
-   <td style="text-align:right;"> 0.722 </td>
-   <td style="text-align:right;"> 0.044 </td>
-   <td style="text-align:right;"> 16.262 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Social: wants a combination of joyful and purposeful training </td>
-   <td style="text-align:right;"> 1.294 </td>
-   <td style="text-align:right;"> 0.045 </td>
-   <td style="text-align:right;"> 28.745 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Encouragement: sometimes encourages you </td>
-   <td style="text-align:right;"> 1.121 </td>
-   <td style="text-align:right;"> 0.045 </td>
-   <td style="text-align:right;"> 24.816 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Encouragement: often encourages you </td>
-   <td style="text-align:right;"> 1.231 </td>
-   <td style="text-align:right;"> 0.046 </td>
-   <td style="text-align:right;"> 27.009 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-</tbody>
-</table>
-
-### males
-
-
-```{.r .test}
-io_ml_m <- io_ml[which(io_ml$female==0),]
-mm <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_m)
-save(mm,file="./results/io_m1_males.RData")
-```
-
-
-```{.r .fold-hide}
-ans_io <- fload("./results/io_m1_males.RData")
-test <- summary(ans_io)
-
-resm <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
-resm$vars[1] <- "Comparison: really likes to compare sports performances"
-resm$vars[2] <- "Comparison: does not like to compare sports performances"
-
-resm$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
-resm$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
-
-resm$vars[5] <- "Social: exercises for fun and enjoyment"
-resm$vars[6] <- "Social: wants a combination of joyful and purposeful training"
-
-resm$vars[7] <- "Encouragement: sometimes encourages you"
-resm$vars[8] <- "Encouragement: often encourages you"
-
-names(resm)[1] <- ""
-
-knitr::kable(resm, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among males in I&O panel") %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
-```
-
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>Conditional logit model: preferences for sports partner attributes among males in I&amp;O panel</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;">  </th>
-   <th style="text-align:right;"> Estimate </th>
-   <th style="text-align:right;"> Std. Error </th>
-   <th style="text-align:right;"> z-value </th>
-   <th style="text-align:right;"> Pr(&gt;|z|) </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> Comparison: really likes to compare sports performances </td>
-   <td style="text-align:right;"> -0.469 </td>
-   <td style="text-align:right;"> 0.056 </td>
-   <td style="text-align:right;"> -8.411 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Comparison: does not like to compare sports performances </td>
-   <td style="text-align:right;"> -0.445 </td>
-   <td style="text-align:right;"> 0.056 </td>
-   <td style="text-align:right;"> -7.935 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Knowledge: knows more than you about effective training and the right technique </td>
-   <td style="text-align:right;"> -0.076 </td>
-   <td style="text-align:right;"> 0.054 </td>
-   <td style="text-align:right;"> -1.399 </td>
-   <td style="text-align:right;"> 0.162 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Knowledge: knows less than you about effective training and the right technique </td>
-   <td style="text-align:right;"> -0.720 </td>
-   <td style="text-align:right;"> 0.058 </td>
-   <td style="text-align:right;"> -12.464 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Social: exercises for fun and enjoyment </td>
-   <td style="text-align:right;"> 0.525 </td>
-   <td style="text-align:right;"> 0.059 </td>
-   <td style="text-align:right;"> 8.950 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Social: wants a combination of joyful and purposeful training </td>
-   <td style="text-align:right;"> 1.115 </td>
-   <td style="text-align:right;"> 0.059 </td>
-   <td style="text-align:right;"> 18.868 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Encouragement: sometimes encourages you </td>
-   <td style="text-align:right;"> 0.930 </td>
-   <td style="text-align:right;"> 0.060 </td>
-   <td style="text-align:right;"> 15.480 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Encouragement: often encourages you </td>
-   <td style="text-align:right;"> 0.959 </td>
-   <td style="text-align:right;"> 0.060 </td>
-   <td style="text-align:right;"> 16.090 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-</tbody>
-</table>
-
-## {.unlisted .unnumbered}
-
-No difference...
-
-
-
-## currently active {.tabset .tabset-fade}
-
-### yes 
-
-
-```{.r .test}
-io_ml_active <- io_ml[which(io_ml$activeW2==1),]
-ma <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_active)
-save(ma,file="./results/io_m1_actives.RData")
-```
-
-
-```{.r .fold-hide}
-ans_io <- fload("./results/io_m1_actives.RData")
-test <- summary(ans_io)
-
-resf <- as_tibble(round(test$CoefTable, 3), rownames = "vars")
-resf$vars[1] <- "Comparison: really likes to compare sports performances"
-resf$vars[2] <- "Comparison: does not like to compare sports performances"
-
-resf$vars[3] <- "Knowledge: knows more than you about effective training and the right technique"
-resf$vars[4] <- "Knowledge: knows less than you about effective training and the right technique"
-
-resf$vars[5] <- "Social: exercises for fun and enjoyment"
-resf$vars[6] <- "Social: wants a combination of joyful and purposeful training"
-
-resf$vars[7] <- "Encouragement: sometimes encourages you"
-resf$vars[8] <- "Encouragement: often encourages you"
-
-names(resf)[1] <- ""
-
-knitr::kable(resf, digits=3, "html",  caption="Conditional logit model: preferences for sports partner attributes among I&O panel respondents who are currently active in sports.") %>%
-  kableExtra::kable_styling(bootstrap_options = c("striped", "hover"))
-```
-
-<table class="table table-striped table-hover" style="margin-left: auto; margin-right: auto;">
-<caption>Conditional logit model: preferences for sports partner attributes among I&amp;O panel respondents who are currently active in sports.</caption>
- <thead>
-  <tr>
-   <th style="text-align:left;">  </th>
-   <th style="text-align:right;"> Estimate </th>
-   <th style="text-align:right;"> Std. Error </th>
-   <th style="text-align:right;"> z-value </th>
-   <th style="text-align:right;"> Pr(&gt;|z|) </th>
-  </tr>
- </thead>
-<tbody>
-  <tr>
-   <td style="text-align:left;"> Comparison: really likes to compare sports performances </td>
-   <td style="text-align:right;"> -0.633 </td>
-   <td style="text-align:right;"> 0.043 </td>
-   <td style="text-align:right;"> -14.837 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Comparison: does not like to compare sports performances </td>
-   <td style="text-align:right;"> -0.282 </td>
-   <td style="text-align:right;"> 0.041 </td>
-   <td style="text-align:right;"> -6.865 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Knowledge: knows more than you about effective training and the right technique </td>
-   <td style="text-align:right;"> 0.004 </td>
-   <td style="text-align:right;"> 0.041 </td>
-   <td style="text-align:right;"> 0.098 </td>
-   <td style="text-align:right;"> 0.922 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Knowledge: knows less than you about effective training and the right technique </td>
-   <td style="text-align:right;"> -0.729 </td>
-   <td style="text-align:right;"> 0.043 </td>
-   <td style="text-align:right;"> -16.802 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Social: exercises for fun and enjoyment </td>
-   <td style="text-align:right;"> 0.399 </td>
-   <td style="text-align:right;"> 0.044 </td>
-   <td style="text-align:right;"> 9.078 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Social: wants a combination of joyful and purposeful training </td>
-   <td style="text-align:right;"> 1.196 </td>
-   <td style="text-align:right;"> 0.044 </td>
-   <td style="text-align:right;"> 27.053 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Encouragement: sometimes encourages you </td>
-   <td style="text-align:right;"> 1.160 </td>
-   <td style="text-align:right;"> 0.046 </td>
-   <td style="text-align:right;"> 25.402 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-  <tr>
-   <td style="text-align:left;"> Encouragement: often encourages you </td>
-   <td style="text-align:right;"> 1.271 </td>
-   <td style="text-align:right;"> 0.046 </td>
-   <td style="text-align:right;"> 27.621 </td>
-   <td style="text-align:right;"> 0.000 </td>
-  </tr>
-</tbody>
-</table>
-
-### no
-
-????
-
-
-```{.r .test}
-io_ml_inactive <- io_ml[which(io_ml$activeW2==0),]
-mna <- mlogit(choice ~ prestatie + kennis + gezellig + esteem |0, data = io_ml_inactive)
-
-save(mf,file="./results/io_m1_inactives.RData")
-```
-
-
-## {.unlisted .unnumbered}
--->
 </div>
 </div>
 
-<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNvbmRpdGlvbmFsIGxvZ2l0IG1vZGVsIg0KYmlibGlvZ3JhcGh5OiByZWZlcmVuY2VzLmJpYg0KZGF0ZTogIkxhc3QgY29tcGlsZWQgb24gYHIgZm9ybWF0KFN5cy50aW1lKCksICclQiwgJVknKWAiDQpvdXRwdXQ6IA0KICBodG1sX2RvY3VtZW50Og0KICAgIGNzczogdHdlYWtzLmNzcw0KICAgIHRvYzogIHRydWUNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBudW1iZXJfc2VjdGlvbnM6IHRydWUNCiAgICB0b2NfZGVwdGg6IDENCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCiAgICBjb2RlX2Rvd25sb2FkOiB5ZXMNCi0tLQ0KDQpgYGB7ciwgZ2xvYmFsc2V0dGluZ3MsIGVjaG89RkFMU0UsIHdhcm5pbmc9RkFMU0UsIHJlc3VsdHM9J2hpZGUnfQ0KbGlicmFyeShrbml0cikNCmtuaXRyOjpvcHRzX2NodW5rJHNldChlY2hvID0gVFJVRSkNCm9wdHNfY2h1bmskc2V0KHRpZHkub3B0cz1saXN0KHdpZHRoLmN1dG9mZj0xMDApLHRpZHk9VFJVRSwgd2FybmluZyA9IEZBTFNFLCBtZXNzYWdlID0gRkFMU0UsY29tbWVudCA9ICIjPiIsIGNhY2hlPVRSVUUsIGNsYXNzLnNvdXJjZT1jKCJ0ZXN0IiksIGNsYXNzLm91dHB1dD1jKCJ0ZXN0MyIpKQ0Kb3B0aW9ucyh3aWR0aCA9IDEwMCkNCnJnbDo6c2V0dXBLbml0cigpDQoNCmNvbG9yaXplIDwtIGZ1bmN0aW9uKHgsIGNvbG9yKSB7c3ByaW50ZigiPHNwYW4gc3R5bGU9J2NvbG9yOiAlczsnPiVzPC9zcGFuPiIsIGNvbG9yLCB4KSB9DQpgYGANCg0KDQpgYGB7ciBrbGlwcHksIGVjaG89RkFMU0UsIGluY2x1ZGU9VFJVRX0NCmtsaXBweTo6a2xpcHB5KHBvc2l0aW9uID0gYygndG9wJywgJ3JpZ2h0JykpDQoja2xpcHB5OjprbGlwcHkoY29sb3IgPSAnZGFya3JlZCcpDQoja2xpcHB5OjprbGlwcHkodG9vbHRpcF9tZXNzYWdlID0gJ0NsaWNrIHRvIGNvcHknLCB0b29sdGlwX3N1Y2Nlc3MgPSAnRG9uZScpDQpgYGANCg0KDQotLS0gIA0KDQoNClRvIGNvcHkgdGhlIGNvZGUsIGNsaWNrIHRoZSBidXR0b24gaW4gdGhlIHVwcGVyIHJpZ2h0IGNvcm5lciBvZiB0aGUgY29kZS1jaHVua3MuDQoNCiMgR2V0dGluZyBzdGFydGVkDQoNCiMjIGNsZWFuIHVwDQoNCmBgYHtyLCByZXN1bHRzPSdoaWRlJ30NCnJtKGxpc3Q9bHMoKSkNCmdjKCkNCmBgYA0KDQo8YnI+DQoNCiMjIGdlbmVyYWwgY3VzdG9tIGZ1bmN0aW9ucw0KDQotIGBmcGFja2FnZS5jaGVja2A6IENoZWNrIGlmIHBhY2thZ2VzIGFyZSBpbnN0YWxsZWQgKGFuZCBpbnN0YWxsIGlmIG5vdCkgaW4gUg0KLSBgZnNhdmVgOiBGdW5jdGlvbiB0byBzYXZlIGRhdGEgd2l0aCB0aW1lIHN0YW1wIGluIGNvcnJlY3QgZGlyZWN0b3J5DQotIGBmbG9hZGA6IEZ1bmN0aW9uIHRvIGxvYWQgUi1vYmplY3RzIHVuZGVyIG5ldyBuYW1lcw0KDQpgYGB7ciwgcmVzdWx0cz0naGlkZScsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9DQpmcGFja2FnZS5jaGVjayA8LSBmdW5jdGlvbihwYWNrYWdlcykgew0KICAgIGxhcHBseShwYWNrYWdlcywgRlVOID0gZnVuY3Rpb24oeCkgew0KICAgICAgICBpZiAoIXJlcXVpcmUoeCwgY2hhcmFjdGVyLm9ubHkgPSBUUlVFKSkgew0KICAgICAgICAgICAgaW5zdGFsbC5wYWNrYWdlcyh4LCBkZXBlbmRlbmNpZXMgPSBUUlVFKQ0KICAgICAgICAgICAgbGlicmFyeSh4LCBjaGFyYWN0ZXIub25seSA9IFRSVUUpDQogICAgICAgIH0NCiAgICB9KQ0KfQ0KDQpmc2F2ZSA8LSBmdW5jdGlvbih4LCBmaWxlLCBsb2NhdGlvbiA9ICIuL2RhdGEvcHJvY2Vzc2VkLyIsIC4uLikgew0KICAgIGlmICghZGlyLmV4aXN0cyhsb2NhdGlvbikpDQogICAgICAgIGRpci5jcmVhdGUobG9jYXRpb24pDQogICAgZGF0ZW5hbWUgPC0gc3Vic3RyKGdzdWIoIls6LV0iLCAiIiwgU3lzLnRpbWUoKSksIDEsIDgpDQogICAgdG90YWxuYW1lIDwtIHBhc3RlKGxvY2F0aW9uLCBkYXRlbmFtZSwgZmlsZSwgc2VwID0gIiIpDQogICAgcHJpbnQocGFzdGUoIlNBVkVEOiAiLCB0b3RhbG5hbWUsIHNlcCA9ICIiKSkNCiAgICBzYXZlKHgsIGZpbGUgPSB0b3RhbG5hbWUpDQp9DQoNCg0KZmxvYWQgIDwtIGZ1bmN0aW9uKGZpbGVOYW1lKXsNCiAgbG9hZChmaWxlTmFtZSkNCiAgZ2V0KGxzKClbbHMoKSAhPSAiZmlsZU5hbWUiXSkNCn0NCmBgYA0KDQo8YnI+DQoNCiMjIG5lY2Vzc2FyeSBwYWNrYWdlcw0KDQotIGB0aWR5dmVyc2VgOiBkYXRhIHdyYW5nbGluZw0KLSBgbWxvZ2l0YDogbXVsdGlub21pYWwgbG9naXQNCi0gYGtuaXRyYDogZ2VuZXJhdGluZyB0YWJsZXMNCi0gYGthYmxlRXh0cmFgOiBtYW5pcHVsYXRpbmcgdGFibGVzDQoNCmBgYHtyLCByZXN1bHRzPSdoaWRlJywgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0NCnBhY2thZ2VzID0gYygidGlkeXZlcnNlIiwgIm1sb2dpdCIsICJrbml0ciIsICJrYWJsZUV4dHJhIikNCmZwYWNrYWdlLmNoZWNrKHBhY2thZ2VzKQ0KYGBgDQoNCjxicj4NCg0KIyMgbG9hZCBpbiBtbG9naXQgZGF0YQ0KYGBge3IsIGV2YWw9Rn0NCiNnZXQgdG9kYXlzIGRhdGU6DQp0b2RheSA8LSBnc3ViKCItIiwgIiIsIFN5cy5EYXRlKCkpDQoNCmlvX21sIDwtIGZsb2FkKHBhc3RlMCgiLi9kYXRhL3Byb2Nlc3NlZC8iLHRvZGF5LCJpb19tbC5SRGF0YSIpKQ0Kcm0gKHRvZGF5KQ0KYGBgDQoNCjxicj4NCg0KIyBydW4gbW9kZWwNCg0KYGBge3IsIGV2YWw9Rn0NCiNtYWluIG1vZGVsDQoNCmNsYXNzKGlvX21sKQ0KDQptMSA8LSBtbG9naXQoY2hvaWNlIH4gcHJlc3RhdGllICsga2VubmlzICsgZ2V6ZWxsaWcgKyBlc3RlZW0gfCAwLCBkYXRhID0gaW9fbWwpDQpzdW1tYXJ5KG0xKQ0Kc2F2ZShtMSxmaWxlPSIuL3Jlc3VsdHMvaW9fbTEuUkRhdGEiKQ0KYGBgDQo8YnI+DQoNCiMjIG91dHB1dA0KDQpgYGB7cixjbGFzcy5zb3VyY2UgPSAnZm9sZC1oaWRlJ30NCmFuc19pbyA8LSBmbG9hZCgiLi9yZXN1bHRzL2lvX20xLlJEYXRhIikNCnRlc3QgPC0gc3VtbWFyeShhbnNfaW8pDQoNCnJlcyA8LSBhc190aWJibGUocm91bmQodGVzdCRDb2VmVGFibGUsIDMpLCByb3duYW1lcyA9ICJ2YXJzIikNCnJlcyR2YXJzWzFdIDwtICJDb21wYXJpc29uOiByZWFsbHkgbGlrZXMgdG8gY29tcGFyZSBzcG9ydHMgcGVyZm9ybWFuY2VzIg0KcmVzJHZhcnNbMl0gPC0gIkNvbXBhcmlzb246IGRvZXMgbm90IGxpa2UgdG8gY29tcGFyZSBzcG9ydHMgcGVyZm9ybWFuY2VzIg0KDQpyZXMkdmFyc1szXSA8LSAiS25vd2xlZGdlOiBrbm93cyBtb3JlIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCnJlcyR2YXJzWzRdIDwtICJLbm93bGVkZ2U6IGtub3dzIGxlc3MgdGhhbiB5b3UgYWJvdXQgZWZmZWN0aXZlIHRyYWluaW5nIGFuZCB0aGUgcmlnaHQgdGVjaG5pcXVlIg0KDQpyZXMkdmFyc1s1XSA8LSAiU29jaWFsOiBleGVyY2lzZXMgZm9yIGZ1biBhbmQgZW5qb3ltZW50Ig0KcmVzJHZhcnNbNl0gPC0gIlNvY2lhbDogd2FudHMgYSBjb21iaW5hdGlvbiBvZiBqb3lmdWwgYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciDQoNCnJlcyR2YXJzWzddIDwtICJFbmNvdXJhZ2VtZW50OiBzb21ldGltZXMgZW5jb3VyYWdlcyB5b3UiDQpyZXMkdmFyc1s4XSA8LSAiRW5jb3VyYWdlbWVudDogb2Z0ZW4gZW5jb3VyYWdlcyB5b3UiDQoNCm5hbWVzKHJlcylbMV0gPC0gIiINCg0KbmFtZXMocmVzKVsyXSA8LSAiTG9nLW9kZHMiDQoNCmtuaXRyOjprYWJsZShyZXMsIGRpZ2l0cz0zLCAiaHRtbCIsICBjYXB0aW9uPSJDb25kaXRpb25hbCBsb2dpdCBtb2RlbDogcHJlZmVyZW5jZXMgZm9yIHNwb3J0cyBwYXJ0bmVyIGF0dHJpYnV0ZXMgaW4gSSZPIHBhbmVsIikgJT4lDQogIGthYmxlRXh0cmE6OmthYmxlX3N0eWxpbmcoYm9vdHN0cmFwX29wdGlvbnMgPSBjKCJzdHJpcGVkIiwgImhvdmVyIikpDQpgYGANCg0KPGJyPg0KDQo8IS0tLS0NCg0KVG8tZG86DQoNCi0gUHJlc2VudCBhdmVyYWdlIHNlbWktZWxhc3RpY2l0aWVzIGZvciBhbGwgbGV2ZWxzIGluIGNvbnRyYXN0IHRvIHRoZSBncmFuZCBtZWFuLiBHcmFuZCBtZWFuIHJlZmxlY3RzIHRoZSBkZWNpc2lvbiBwcm9iYWJpbGl0eSBmb3Igb25lIG9mIHRoZSB0aHJlZSBzcG9ydHMgcGFydG5lcnMgaWYgdGhlIHJlc3BvbmRlbnQgaGFzIG5vIHByZWZlcmVuY2VzICh0aHVzLCBhIGJhc2UgcHJvYmFiaWxpdHkgb2YgMS8zLCB3aGljaCBpcyBzZXQgdG8gemVybykuIEFjY29yZGluZ2x5LCB0aGUgcG9zaXRpdmUgZWZmZWN0IC0gZGlzcGxheWVkIHRvIHRoZSByaWdodCBvZiB0aGUgemVybyBsaW5lIG9uIHRoZSB4LWF4aXMgLSBpbmRpY2F0ZXMgdGhhdCBwZW9wbGUgYXJlLCBvbiBhdmVyYWdlLCBtb3JlIGxpa2VseSB0byBjaG9vc2UgYSBzcG9ydHMgcGFydG5lciBpZiB0aGV5IGhhdmUgdGhlIHJlc3BlY3RpdmUgYXR0cmlidXRlLiBBbmQgYW4gZWZmZWN0IGRpc3BsYXllZCB0byB0aGUgbGVmdCBvZiB0aGUgemVybyBsaW5lIGluZGljYXRlcyBwZW9wbGUgYXJlIGxlc3MgbGlrZWx5IHRvIGNob29zZSBhIHNwb3J0cyBwYXJ0bmVyIGlmIGl0IGhhcyB0aGUgcmVzcGVjdGl2ZSBhdHRyaWJ1dGUuIFdoaXNrZXJzIHJlcHJlc2VudCA5NSUgY29uZmlkZW50IGludGVydmFscy4NCg0KPGJyPg0KLS0+DQoNCiMjIyBvYnNlcnZhdGlvbnMNCg0KMS4gQ29tcGFyaXNvbjogcmVzcG9uZGVudHMgcHJlZmVyIGEgc3BvcnRzIHBhcnRuZXIgd2hvIHBsYWNlcyBhbiBhcHByb3ByaWF0ZSBhbW91bnQgb2YgZW1waGFzaXMgb24gc29jaWFsIGNvbXBhcmlzb24g4oCUIG5vdCB0b28gbXVjaCBhbmQgbm90IHRvbyBsaXR0bGUuDQoNCjIuIEtub3dsZWRnZTogcmVzcG9uZGVudHMgZG9uJ3Qgd2FudCBhIHNwb3J0cyBwYXJ0bmVyIHRoYXQga25vd3MgbGVzcyBhYm91dCB0cmFpbmluZyBhbmQgdGVjaG5pcXVlIHRoYW4gdGhlbXNlbHZlcy4gDQoNCjMuIFNvY2lhbDogcmVzcG9uZGVudHMgc2VlbSB0byBmYXZvciBzb21lb25lIHdobyBjb21iaW5lcyBoYXZpbmcgZnVuIGFuZCBiZWluZyBnb2FsLW9yaWVudGVkIHdoaWxlIHRyYWluaW5nOyBob3dldmVyLCB0aGV5IGFwcGVhciB0byBwcmVmZXIgZXhlcmNpc2luZyBmb3IgZnVuIG92ZXIgZG9pbmcgc28gc29sZWx5IHNlcmlvdXNseQ0KDQo0LiBFbmNvdXJhZ2VtZW50OiByZXNwb25kZW50cyBwcmVmZXIgYSBzcG9ydHMgcGFydG5lciB0aGF0IHJlZ3VsYXJseSBlbmNvdXJhZ2VzIHRoZW0uDQoNCjxicj4NCg0KLS0tLQ0KDQojIHN1Ymdyb3VwIGFuYWx5c2VzDQoNCiMjICBtYWxlIHZzLiBmZW1hbGUgey50YWJzZXQgLnRhYnNldC1mYWRlfQ0KDQojIyMgbWFsZXMNCg0KYGBge3IsIGV2YWw9Rn0NCmlvX21sX20gPC0gaW9fbWxbd2hpY2goaW9fbWwkZmVtYWxlPT0wKSxdDQptbSA8LSBtbG9naXQoY2hvaWNlIH4gcHJlc3RhdGllICsga2VubmlzICsgZ2V6ZWxsaWcgKyBlc3RlZW0gfDAsIGRhdGEgPSBpb19tbF9tKQ0Kc2F2ZShtbSxmaWxlPSIuL3Jlc3VsdHMvaW9fbTFfbWFsZXMuUkRhdGEiKQ0KYGBgDQoNCmBgYHtyLGNsYXNzLnNvdXJjZSA9ICdmb2xkLWhpZGUnfQ0KYW5zX2lvIDwtIGZsb2FkKCIuL3Jlc3VsdHMvaW9fbTFfbWFsZXMuUkRhdGEiKQ0KdGVzdCA8LSBzdW1tYXJ5KGFuc19pbykNCg0KcmVzbSA8LSBhc190aWJibGUocm91bmQodGVzdCRDb2VmVGFibGUsIDMpLCByb3duYW1lcyA9ICJ2YXJzIikNCnJlc20kdmFyc1sxXSA8LSAiQ29tcGFyaXNvbjogcmVhbGx5IGxpa2VzIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyINCnJlc20kdmFyc1syXSA8LSAiQ29tcGFyaXNvbjogZG9lcyBub3QgbGlrZSB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiDQoNCnJlc20kdmFyc1szXSA8LSAiS25vd2xlZGdlOiBrbm93cyBtb3JlIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCnJlc20kdmFyc1s0XSA8LSAiS25vd2xlZGdlOiBrbm93cyBsZXNzIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCg0KcmVzbSR2YXJzWzVdIDwtICJTb2NpYWw6IGV4ZXJjaXNlcyBmb3IgZnVuIGFuZCBlbmpveW1lbnQiDQpyZXNtJHZhcnNbNl0gPC0gIlNvY2lhbDogd2FudHMgYSBjb21iaW5hdGlvbiBvZiBqb3lmdWwgYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciDQoNCnJlc20kdmFyc1s3XSA8LSAiRW5jb3VyYWdlbWVudDogc29tZXRpbWVzIGVuY291cmFnZXMgeW91Ig0KcmVzbSR2YXJzWzhdIDwtICJFbmNvdXJhZ2VtZW50OiBvZnRlbiBlbmNvdXJhZ2VzIHlvdSINCg0KbmFtZXMocmVzbSlbMV0gPC0gIiINCm5hbWVzKHJlcylbMl0gPC0gIkxvZy1vZGRzIg0KDQprbml0cjo6a2FibGUocmVzbSwgZGlnaXRzPTMsICJodG1sIiwgIGNhcHRpb249IkNvbmRpdGlvbmFsIGxvZ2l0IG1vZGVsOiBwcmVmZXJlbmNlcyBmb3Igc3BvcnRzIHBhcnRuZXIgYXR0cmlidXRlcyBhbW9uZyBtYWxlcyBpbiBJJk8gcGFuZWwiKSAlPiUNCiAga2FibGVFeHRyYTo6a2FibGVfc3R5bGluZyhib290c3RyYXBfb3B0aW9ucyA9IGMoInN0cmlwZWQiLCAiaG92ZXIiKSkNCmBgYA0KDQojIyMgZmVtYWxlcw0KDQpgYGB7ciwgZXZhbD1GfQ0KaW9fbWxfZiA8LSBpb19tbFt3aGljaChpb19tbCRmZW1hbGU9PTEpLF0NCm1mIDwtIG1sb2dpdChjaG9pY2UgfiBwcmVzdGF0aWUgKyBrZW5uaXMgKyBnZXplbGxpZyArIGVzdGVlbSB8MCwgZGF0YSA9IGlvX21sX2YpDQpzYXZlKG1mLGZpbGU9Ii4vcmVzdWx0cy9pb19tMV9mZW1hbGVzLlJEYXRhIikNCmBgYA0KDQpgYGB7cixjbGFzcy5zb3VyY2UgPSAnZm9sZC1oaWRlJ30NCmFuc19pbyA8LSBmbG9hZCgiLi9yZXN1bHRzL2lvX20xX2ZlbWFsZXMuUkRhdGEiKQ0KdGVzdCA8LSBzdW1tYXJ5KGFuc19pbykNCg0KcmVzZiA8LSBhc190aWJibGUocm91bmQodGVzdCRDb2VmVGFibGUsIDMpLCByb3duYW1lcyA9ICJ2YXJzIikNCnJlc2YkdmFyc1sxXSA8LSAiQ29tcGFyaXNvbjogcmVhbGx5IGxpa2VzIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyINCnJlc2YkdmFyc1syXSA8LSAiQ29tcGFyaXNvbjogZG9lcyBub3QgbGlrZSB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiDQoNCnJlc2YkdmFyc1szXSA8LSAiS25vd2xlZGdlOiBrbm93cyBtb3JlIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCnJlc2YkdmFyc1s0XSA8LSAiS25vd2xlZGdlOiBrbm93cyBsZXNzIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCg0KcmVzZiR2YXJzWzVdIDwtICJTb2NpYWw6IGV4ZXJjaXNlcyBmb3IgZnVuIGFuZCBlbmpveW1lbnQiDQpyZXNmJHZhcnNbNl0gPC0gIlNvY2lhbDogd2FudHMgYSBjb21iaW5hdGlvbiBvZiBqb3lmdWwgYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciDQoNCnJlc2YkdmFyc1s3XSA8LSAiRW5jb3VyYWdlbWVudDogc29tZXRpbWVzIGVuY291cmFnZXMgeW91Ig0KcmVzZiR2YXJzWzhdIDwtICJFbmNvdXJhZ2VtZW50OiBvZnRlbiBlbmNvdXJhZ2VzIHlvdSINCg0KbmFtZXMocmVzZilbMV0gPC0gIiINCm5hbWVzKHJlcylbMl0gPC0gIkxvZy1vZGRzIg0KDQprbml0cjo6a2FibGUocmVzZiwgZGlnaXRzPTMsICJodG1sIiwgIGNhcHRpb249IkNvbmRpdGlvbmFsIGxvZ2l0IG1vZGVsOiBwcmVmZXJlbmNlcyBmb3Igc3BvcnRzIHBhcnRuZXIgYXR0cmlidXRlcyBhbW9uZyBmZW1hbGVzIGluIEkmTyBwYW5lbCIpICU+JQ0KICBrYWJsZUV4dHJhOjprYWJsZV9zdHlsaW5nKGJvb3RzdHJhcF9vcHRpb25zID0gYygic3RyaXBlZCIsICJob3ZlciIpKQ0KYGBgDQoNCg0KDQoNCiMjIHsudW5saXN0ZWQgLnVubnVtYmVyZWR9DQoNCkJvdGggZ2VuZGVycyB3b24ndCBjaG9vc2UgYSBzcG9ydHMgcGFydG5lciB3aG8gcGxhY2VzIGdyZWF0IGVtcGhhc2lzIG9uIHNvY2lhbCBjb21wYXJpc29uIGFuZCBjb21wZXRpdGlvbi4gSG93ZXZlciwgbWFsZXMgZ2VuZXJhbGx5IHByZWZlciBhIHNwb3J0cyBwYXJ0bmVyIHdobyBwbGFjZXMgc29tZSBlbXBoYXNpcyBvbiBzb2NpYWwgY29tcGFyaXNvbiwgd2hlcmVhcyBmZW1hbGVzIHNob3cgbm8gc2lnbmlmaWNhbnQgZGlmZmVyZW5jZSBpbiB0aGVpciBwcmVmZXJlbmNlIGZvciBhIHBhcnRuZXIgd2hvIHBsYWNlcyBsaXR0bGUgb3Igbm8gZW1waGFzaXMgb24gc29jaWFsIGNvbXBhcmlzb24uIEluIGxpbmUgd2l0aCB0aGUgaWRlYSB0aGF0IG1hbGUgc3BvcnRzIHBhcnRpY2lwYXRpb24gaXMgZHJpdmVuIHRvIGEgZ3JlYXRlciBleHRlbnQgYnkgc3RhdHVzL2NvbXBldGl0aW9uIHRoYW4gZmVtYWxlcyAod2hvIHdlcmUgZXhwZWN0ZWQgdG8gYmUgbW9yZSBkcml2ZW4gYnkgYWZmaWxpYXRpb24sIHdoaWNoIGlzIG5vdCBhcHBhcmVudCBmcm9tIHRoZSBtb2RlbCByZXN1bHRzKS4NCg0KDQojIyBjdXJyZW50bHkgYWN0aXZlIHsudGFic2V0IC50YWJzZXQtZmFkZX0NCg0KIyMjIHllcyANCg0KYGBge3IsIGV2YWw9Rn0NCmlvX21sX2FjdGl2ZSA8LSBpb19tbFt3aGljaChpb19tbCRhY3RpdmVXMj09MSksXQ0KbWEgPC0gbWxvZ2l0KGNob2ljZSB+IHByZXN0YXRpZSArIGtlbm5pcyArIGdlemVsbGlnICsgZXN0ZWVtIHwwLCBkYXRhID0gaW9fbWxfYWN0aXZlKQ0Kc2F2ZShtYSxmaWxlPSIuL3Jlc3VsdHMvaW9fbTFfYWN0aXZlcy5SRGF0YSIpDQpgYGANCg0KYGBge3IsY2xhc3Muc291cmNlID0gJ2ZvbGQtaGlkZSd9DQphbnNfaW8gPC0gZmxvYWQoIi4vcmVzdWx0cy9pb19tMV9hY3RpdmVzLlJEYXRhIikNCnRlc3QgPC0gc3VtbWFyeShhbnNfaW8pDQoNCnJlc2YgPC0gYXNfdGliYmxlKHJvdW5kKHRlc3QkQ29lZlRhYmxlLCAzKSwgcm93bmFtZXMgPSAidmFycyIpDQpyZXNmJHZhcnNbMV0gPC0gIkNvbXBhcmlzb246IHJlYWxseSBsaWtlcyB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiDQpyZXNmJHZhcnNbMl0gPC0gIkNvbXBhcmlzb246IGRvZXMgbm90IGxpa2UgdG8gY29tcGFyZSBzcG9ydHMgcGVyZm9ybWFuY2VzIg0KDQpyZXNmJHZhcnNbM10gPC0gIktub3dsZWRnZToga25vd3MgbW9yZSB0aGFuIHlvdSBhYm91dCBlZmZlY3RpdmUgdHJhaW5pbmcgYW5kIHRoZSByaWdodCB0ZWNobmlxdWUiDQpyZXNmJHZhcnNbNF0gPC0gIktub3dsZWRnZToga25vd3MgbGVzcyB0aGFuIHlvdSBhYm91dCBlZmZlY3RpdmUgdHJhaW5pbmcgYW5kIHRoZSByaWdodCB0ZWNobmlxdWUiDQoNCnJlc2YkdmFyc1s1XSA8LSAiU29jaWFsOiBleGVyY2lzZXMgZm9yIGZ1biBhbmQgZW5qb3ltZW50Ig0KcmVzZiR2YXJzWzZdIDwtICJTb2NpYWw6IHdhbnRzIGEgY29tYmluYXRpb24gb2Ygam95ZnVsIGFuZCBwdXJwb3NlZnVsIHRyYWluaW5nIg0KDQpyZXNmJHZhcnNbN10gPC0gIkVuY291cmFnZW1lbnQ6IHNvbWV0aW1lcyBlbmNvdXJhZ2VzIHlvdSINCnJlc2YkdmFyc1s4XSA8LSAiRW5jb3VyYWdlbWVudDogb2Z0ZW4gZW5jb3VyYWdlcyB5b3UiDQoNCm5hbWVzKHJlc2YpWzFdIDwtICIiDQpuYW1lcyhyZXNmKVsyXSA8LSAiTG9nLW9kZHMiDQoNCmtuaXRyOjprYWJsZShyZXNmLCBkaWdpdHM9MywgImh0bWwiLCAgY2FwdGlvbj0iQ29uZGl0aW9uYWwgbG9naXQgbW9kZWw6IHByZWZlcmVuY2VzIGZvciBzcG9ydHMgcGFydG5lciBhdHRyaWJ1dGVzIGFtb25nIEkmTyBwYW5lbCByZXNwb25kZW50cyB3aG8gYXJlIGN1cnJlbnRseSBhY3RpdmUgaW4gc3BvcnRzLiIpICU+JQ0KICBrYWJsZUV4dHJhOjprYWJsZV9zdHlsaW5nKGJvb3RzdHJhcF9vcHRpb25zID0gYygic3RyaXBlZCIsICJob3ZlciIpKQ0KYGBgDQoNCiMjIyBubw0KDQpgYGB7ciwgZXZhbD1GfQ0KaW9fbWxfaW5hY3RpdmUgPC0gaW9fbWxbd2hpY2goaW9fbWwkYWN0aXZlVzI9PTApLF0NCm1uYSA8LSBtbG9naXQoY2hvaWNlIH4gcHJlc3RhdGllICsga2VubmlzICsgZ2V6ZWxsaWcgKyBlc3RlZW0gfDAsIGRhdGEgPSBpb19tbF9pbmFjdGl2ZSkNCnNhdmUobWYsZmlsZT0iLi9yZXN1bHRzL2lvX20xX2luYWN0aXZlcy5SRGF0YSIpDQpgYGANCg0KYGBge3IsY2xhc3Muc291cmNlID0gJ2ZvbGQtaGlkZSd9DQphbnNfaW8gPC0gZmxvYWQoIi4vcmVzdWx0cy9pb19tMV9pbmFjdGl2ZXMuUkRhdGEiKQ0KdGVzdCA8LSBzdW1tYXJ5KGFuc19pbykNCg0KcmVzZiA8LSBhc190aWJibGUocm91bmQodGVzdCRDb2VmVGFibGUsIDMpLCByb3duYW1lcyA9ICJ2YXJzIikNCnJlc2YkdmFyc1sxXSA8LSAiQ29tcGFyaXNvbjogcmVhbGx5IGxpa2VzIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyINCnJlc2YkdmFyc1syXSA8LSAiQ29tcGFyaXNvbjogZG9lcyBub3QgbGlrZSB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiDQoNCnJlc2YkdmFyc1szXSA8LSAiS25vd2xlZGdlOiBrbm93cyBtb3JlIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCnJlc2YkdmFyc1s0XSA8LSAiS25vd2xlZGdlOiBrbm93cyBsZXNzIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCg0KcmVzZiR2YXJzWzVdIDwtICJTb2NpYWw6IGV4ZXJjaXNlcyBmb3IgZnVuIGFuZCBlbmpveW1lbnQiDQpyZXNmJHZhcnNbNl0gPC0gIlNvY2lhbDogd2FudHMgYSBjb21iaW5hdGlvbiBvZiBqb3lmdWwgYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciDQoNCnJlc2YkdmFyc1s3XSA8LSAiRW5jb3VyYWdlbWVudDogc29tZXRpbWVzIGVuY291cmFnZXMgeW91Ig0KcmVzZiR2YXJzWzhdIDwtICJFbmNvdXJhZ2VtZW50OiBvZnRlbiBlbmNvdXJhZ2VzIHlvdSINCg0KbmFtZXMocmVzZilbMV0gPC0gIiINCm5hbWVzKHJlc2YpWzJdIDwtICJMb2ctb2RkcyINCg0Ka25pdHI6OmthYmxlKHJlc2YsIGRpZ2l0cz0zLCAiaHRtbCIsICBjYXB0aW9uPSJDb25kaXRpb25hbCBsb2dpdCBtb2RlbDogcHJlZmVyZW5jZXMgZm9yIHNwb3J0cyBwYXJ0bmVyIGF0dHJpYnV0ZXMgYW1vbmcgSSZPIHBhbmVsIHJlc3BvbmRlbnRzIHdobyBhcmUgY3VycmVudGx5IG5vdCBhY3RpdmUgaW4gc3BvcnRzLiIpICU+JQ0KICBrYWJsZUV4dHJhOjprYWJsZV9zdHlsaW5nKGJvb3RzdHJhcF9vcHRpb25zID0gYygic3RyaXBlZCIsICJob3ZlciIpKQ0KYGBgDQoNCg0KDQojIyB7LnVubGlzdGVkIC51bm51bWJlcmVkfQ0KDQpTaW1pbGFyIHBhdHRlcm46IHRob3NlIGN1cnJlbnRseSBhY3RpdmUgcHJlZmVyIHNwb3J0cyBwYXJ0bmVycyB3aG8gcGxhY2UgYW4gYXBwcm9wcmlhdGUgYW1vdW50IG9mIGVtcGhhc2lzIG9uIHNvY2lhbCBjb21wYXJpc29uIChub3QgdG9vIG11Y2gsIG5vdCB0b28gbGl0dGxlKS4gVGhvc2UgY3VycmVudGx5IGluYWN0aXZlIGRvIG5vdDogdGhleSBkaXNsaWtlIGdyZWF0IGVtcGhhc2lzIG9uIHNvY2lhbCBjb21wYXJpc29uL2NvbXBldGl0aW9uLCBidXQgZG8gbm90IHByZWZlciBhIGxpdHRsZSBvdmVyIG5vIGVtcGhhc2lzIG9uIHNvY2lhbCBjb21wYXJpc29uLiBBZ2FpbiwgaW4gbGluZSB3aXRoIHRoZSBleHBlY3RhdGlvbi4gQ3VycmVudGx5LCBubyBub3RhYmxlIGRpZmZlcmVuY2UgaW4gaW1wb3J0YW5jZSBvZiBzb2NpYWwtZW1vdGlvbmFsIG1vdGl2ZXMgKGkuZS4sIGVuY291cmFnZW1lbnQsIGFmZmlsaWF0aW9uKS4NCg0KTm90ZSB0aGF0IHRoZSBnZW5kZXJzIGRvIGhhcmRseSBkaWZmZXIgaW4gd2hldGhlciBvciBub3QgdGhleSBhcmUgY3VycmVudGx5IGFjdGl2ZSBbcihmZW1hbGUsIGFjdGl2ZSkgPCAtMC4wMl0uDQoNCg0KDQo8IS0tLQ0KLS0tLS0tLS0tLS0tLS0tLS0tLS0NCg0KDQo8YnI+DQo8YnI+DQoNCi0tLS0tLS0tLS0tLS0tLS0tLQ0KDQoNCiMgaW50ZXJhY3Rpb25zIA0KDQpgYGB7ciwgZXZhbD1GfQ0KI2ludGVyYWN0aW9uIG1vZGVsDQoNCg0Kc3RyKGlvX21sKQ0KbTIgPC0gbWxvZ2l0KGNob2ljZSB+IHByZXN0YXRpZSArIGtlbm5pcyArIGdlemVsbGlnICsgZXN0ZWVtIHwgZmVtYWxlLCBkYXRhID0gaW9fbWwpDQpzdW1tYXJ5KG0yKQ0KDQptMiA8LSBtbG9naXQoY2hvaWNlIH4gcHJlc3RhdGllICsga2VubmlzICsgZ2V6ZWxsaWcgKyBlc3RlZW0gfCBmZW1hbGUsIGRhdGEgPSBpb19tbCwgbWV0aG9kID0gImJoaGgiKQ0KDQpzYXZlKG0yLGZpbGU9Ii4vcmVzdWx0cy9pb19tMi5SRGF0YSIpDQoNCm1sb2dpdChjaG9pY2UgfiB4IHwgeiArIHg6eiwgZGF0YSA9IHlvdXJfZGF0YXNldCkNCg0KYGBgDQoNCg0KDQoNCg0KDQpUZXN0IGludGVyYWN0aW9ucyBxdWljayAnbiBkaXJ0eTogc3Vic2V0IGRhdGEgcGVyIGdyb3VwIGFuZCBlc3RpbWF0ZSBkaWZmZXJlbnQgbW9kZWxzDQoNCiMjIGdlbmRlciB7LnRhYnNldCAudGFic2V0LWZhZGV9DQoNCiMjIyBmZW1hbGVzIA0KDQpgYGB7ciwgZXZhbD1GfQ0KaW9fbWxfZiA8LSBpb19tbFt3aGljaChpb19tbCRmZW1hbGU9PTEpLF0NCm1mIDwtIG1sb2dpdChjaG9pY2UgfiBwcmVzdGF0aWUgKyBrZW5uaXMgKyBnZXplbGxpZyArIGVzdGVlbSB8MCwgZGF0YSA9IGlvX21sX2YpDQpzYXZlKG1mLGZpbGU9Ii4vcmVzdWx0cy9pb19tMV9mZW1hbGVzLlJEYXRhIikNCmBgYA0KDQpgYGB7cixjbGFzcy5zb3VyY2UgPSAnZm9sZC1oaWRlJ30NCmFuc19pbyA8LSBmbG9hZCgiLi9yZXN1bHRzL2lvX20xX2ZlbWFsZXMuUkRhdGEiKQ0KdGVzdCA8LSBzdW1tYXJ5KGFuc19pbykNCg0KcmVzZiA8LSBhc190aWJibGUocm91bmQodGVzdCRDb2VmVGFibGUsIDMpLCByb3duYW1lcyA9ICJ2YXJzIikNCnJlc2YkdmFyc1sxXSA8LSAiQ29tcGFyaXNvbjogcmVhbGx5IGxpa2VzIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyINCnJlc2YkdmFyc1syXSA8LSAiQ29tcGFyaXNvbjogZG9lcyBub3QgbGlrZSB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiDQoNCnJlc2YkdmFyc1szXSA8LSAiS25vd2xlZGdlOiBrbm93cyBtb3JlIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCnJlc2YkdmFyc1s0XSA8LSAiS25vd2xlZGdlOiBrbm93cyBsZXNzIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCg0KcmVzZiR2YXJzWzVdIDwtICJTb2NpYWw6IGV4ZXJjaXNlcyBmb3IgZnVuIGFuZCBlbmpveW1lbnQiDQpyZXNmJHZhcnNbNl0gPC0gIlNvY2lhbDogd2FudHMgYSBjb21iaW5hdGlvbiBvZiBqb3lmdWwgYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciDQoNCnJlc2YkdmFyc1s3XSA8LSAiRW5jb3VyYWdlbWVudDogc29tZXRpbWVzIGVuY291cmFnZXMgeW91Ig0KcmVzZiR2YXJzWzhdIDwtICJFbmNvdXJhZ2VtZW50OiBvZnRlbiBlbmNvdXJhZ2VzIHlvdSINCg0KbmFtZXMocmVzZilbMV0gPC0gIiINCg0Ka25pdHI6OmthYmxlKHJlc2YsIGRpZ2l0cz0zLCAiaHRtbCIsICBjYXB0aW9uPSJDb25kaXRpb25hbCBsb2dpdCBtb2RlbDogcHJlZmVyZW5jZXMgZm9yIHNwb3J0cyBwYXJ0bmVyIGF0dHJpYnV0ZXMgYW1vbmcgZmVtYWxlcyBpbiBJJk8gcGFuZWwiKSAlPiUNCiAga2FibGVFeHRyYTo6a2FibGVfc3R5bGluZyhib290c3RyYXBfb3B0aW9ucyA9IGMoInN0cmlwZWQiLCAiaG92ZXIiKSkNCmBgYA0KDQojIyMgbWFsZXMNCg0KYGBge3IsIGV2YWw9Rn0NCmlvX21sX20gPC0gaW9fbWxbd2hpY2goaW9fbWwkZmVtYWxlPT0wKSxdDQptbSA8LSBtbG9naXQoY2hvaWNlIH4gcHJlc3RhdGllICsga2VubmlzICsgZ2V6ZWxsaWcgKyBlc3RlZW0gfDAsIGRhdGEgPSBpb19tbF9tKQ0Kc2F2ZShtbSxmaWxlPSIuL3Jlc3VsdHMvaW9fbTFfbWFsZXMuUkRhdGEiKQ0KYGBgDQoNCmBgYHtyLGNsYXNzLnNvdXJjZSA9ICdmb2xkLWhpZGUnfQ0KYW5zX2lvIDwtIGZsb2FkKCIuL3Jlc3VsdHMvaW9fbTFfbWFsZXMuUkRhdGEiKQ0KdGVzdCA8LSBzdW1tYXJ5KGFuc19pbykNCg0KcmVzbSA8LSBhc190aWJibGUocm91bmQodGVzdCRDb2VmVGFibGUsIDMpLCByb3duYW1lcyA9ICJ2YXJzIikNCnJlc20kdmFyc1sxXSA8LSAiQ29tcGFyaXNvbjogcmVhbGx5IGxpa2VzIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyINCnJlc20kdmFyc1syXSA8LSAiQ29tcGFyaXNvbjogZG9lcyBub3QgbGlrZSB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiDQoNCnJlc20kdmFyc1szXSA8LSAiS25vd2xlZGdlOiBrbm93cyBtb3JlIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCnJlc20kdmFyc1s0XSA8LSAiS25vd2xlZGdlOiBrbm93cyBsZXNzIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSINCg0KcmVzbSR2YXJzWzVdIDwtICJTb2NpYWw6IGV4ZXJjaXNlcyBmb3IgZnVuIGFuZCBlbmpveW1lbnQiDQpyZXNtJHZhcnNbNl0gPC0gIlNvY2lhbDogd2FudHMgYSBjb21iaW5hdGlvbiBvZiBqb3lmdWwgYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciDQoNCnJlc20kdmFyc1s3XSA8LSAiRW5jb3VyYWdlbWVudDogc29tZXRpbWVzIGVuY291cmFnZXMgeW91Ig0KcmVzbSR2YXJzWzhdIDwtICJFbmNvdXJhZ2VtZW50OiBvZnRlbiBlbmNvdXJhZ2VzIHlvdSINCg0KbmFtZXMocmVzbSlbMV0gPC0gIiINCg0Ka25pdHI6OmthYmxlKHJlc20sIGRpZ2l0cz0zLCAiaHRtbCIsICBjYXB0aW9uPSJDb25kaXRpb25hbCBsb2dpdCBtb2RlbDogcHJlZmVyZW5jZXMgZm9yIHNwb3J0cyBwYXJ0bmVyIGF0dHJpYnV0ZXMgYW1vbmcgbWFsZXMgaW4gSSZPIHBhbmVsIikgJT4lDQogIGthYmxlRXh0cmE6OmthYmxlX3N0eWxpbmcoYm9vdHN0cmFwX29wdGlvbnMgPSBjKCJzdHJpcGVkIiwgImhvdmVyIikpDQpgYGANCg0KIyMgey51bmxpc3RlZCAudW5udW1iZXJlZH0NCg0KTm8gZGlmZmVyZW5jZS4uLg0KDQoNCg0KIyMgY3VycmVudGx5IGFjdGl2ZSB7LnRhYnNldCAudGFic2V0LWZhZGV9DQoNCiMjIyB5ZXMgDQoNCmBgYHtyLCBldmFsPUZ9DQppb19tbF9hY3RpdmUgPC0gaW9fbWxbd2hpY2goaW9fbWwkYWN0aXZlVzI9PTEpLF0NCm1hIDwtIG1sb2dpdChjaG9pY2UgfiBwcmVzdGF0aWUgKyBrZW5uaXMgKyBnZXplbGxpZyArIGVzdGVlbSB8MCwgZGF0YSA9IGlvX21sX2FjdGl2ZSkNCnNhdmUobWEsZmlsZT0iLi9yZXN1bHRzL2lvX20xX2FjdGl2ZXMuUkRhdGEiKQ0KYGBgDQoNCmBgYHtyLGNsYXNzLnNvdXJjZSA9ICdmb2xkLWhpZGUnfQ0KYW5zX2lvIDwtIGZsb2FkKCIuL3Jlc3VsdHMvaW9fbTFfYWN0aXZlcy5SRGF0YSIpDQp0ZXN0IDwtIHN1bW1hcnkoYW5zX2lvKQ0KDQpyZXNmIDwtIGFzX3RpYmJsZShyb3VuZCh0ZXN0JENvZWZUYWJsZSwgMyksIHJvd25hbWVzID0gInZhcnMiKQ0KcmVzZiR2YXJzWzFdIDwtICJDb21wYXJpc29uOiByZWFsbHkgbGlrZXMgdG8gY29tcGFyZSBzcG9ydHMgcGVyZm9ybWFuY2VzIg0KcmVzZiR2YXJzWzJdIDwtICJDb21wYXJpc29uOiBkb2VzIG5vdCBsaWtlIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyINCg0KcmVzZiR2YXJzWzNdIDwtICJLbm93bGVkZ2U6IGtub3dzIG1vcmUgdGhhbiB5b3UgYWJvdXQgZWZmZWN0aXZlIHRyYWluaW5nIGFuZCB0aGUgcmlnaHQgdGVjaG5pcXVlIg0KcmVzZiR2YXJzWzRdIDwtICJLbm93bGVkZ2U6IGtub3dzIGxlc3MgdGhhbiB5b3UgYWJvdXQgZWZmZWN0aXZlIHRyYWluaW5nIGFuZCB0aGUgcmlnaHQgdGVjaG5pcXVlIg0KDQpyZXNmJHZhcnNbNV0gPC0gIlNvY2lhbDogZXhlcmNpc2VzIGZvciBmdW4gYW5kIGVuam95bWVudCINCnJlc2YkdmFyc1s2XSA8LSAiU29jaWFsOiB3YW50cyBhIGNvbWJpbmF0aW9uIG9mIGpveWZ1bCBhbmQgcHVycG9zZWZ1bCB0cmFpbmluZyINCg0KcmVzZiR2YXJzWzddIDwtICJFbmNvdXJhZ2VtZW50OiBzb21ldGltZXMgZW5jb3VyYWdlcyB5b3UiDQpyZXNmJHZhcnNbOF0gPC0gIkVuY291cmFnZW1lbnQ6IG9mdGVuIGVuY291cmFnZXMgeW91Ig0KDQpuYW1lcyhyZXNmKVsxXSA8LSAiIg0KDQprbml0cjo6a2FibGUocmVzZiwgZGlnaXRzPTMsICJodG1sIiwgIGNhcHRpb249IkNvbmRpdGlvbmFsIGxvZ2l0IG1vZGVsOiBwcmVmZXJlbmNlcyBmb3Igc3BvcnRzIHBhcnRuZXIgYXR0cmlidXRlcyBhbW9uZyBJJk8gcGFuZWwgcmVzcG9uZGVudHMgd2hvIGFyZSBjdXJyZW50bHkgYWN0aXZlIGluIHNwb3J0cy4iKSAlPiUNCiAga2FibGVFeHRyYTo6a2FibGVfc3R5bGluZyhib290c3RyYXBfb3B0aW9ucyA9IGMoInN0cmlwZWQiLCAiaG92ZXIiKSkNCmBgYA0KDQojIyMgbm8NCg0KPz8/Pw0KDQpgYGB7ciwgZXZhbD1GfQ0KaW9fbWxfaW5hY3RpdmUgPC0gaW9fbWxbd2hpY2goaW9fbWwkYWN0aXZlVzI9PTApLF0NCm1uYSA8LSBtbG9naXQoY2hvaWNlIH4gcHJlc3RhdGllICsga2VubmlzICsgZ2V6ZWxsaWcgKyBlc3RlZW0gfDAsIGRhdGEgPSBpb19tbF9pbmFjdGl2ZSkNCg0Kc2F2ZShtZixmaWxlPSIuL3Jlc3VsdHMvaW9fbTFfaW5hY3RpdmVzLlJEYXRhIikNCmBgYA0KDQoNCiMjIHsudW5saXN0ZWQgLnVubnVtYmVyZWR9DQotLT4NCg==</div>
+<div id="rmd-source-code">LS0tDQp0aXRsZTogIkNvbmRpdGlvbmFsIGxvZ2l0IG1vZGVsIg0KYmlibGlvZ3JhcGh5OiByZWZlcmVuY2VzLmJpYg0KZGF0ZTogIkxhc3QgY29tcGlsZWQgb24gYHIgZm9ybWF0KFN5cy50aW1lKCksICclQiwgJVknKWAiDQpvdXRwdXQ6IA0KICBodG1sX2RvY3VtZW50Og0KICAgIGNzczogdHdlYWtzLmNzcw0KICAgIHRvYzogIHRydWUNCiAgICB0b2NfZmxvYXQ6IHRydWUNCiAgICBudW1iZXJfc2VjdGlvbnM6IHRydWUNCiAgICB0b2NfZGVwdGg6IDENCiAgICBjb2RlX2ZvbGRpbmc6IHNob3cNCiAgICBjb2RlX2Rvd25sb2FkOiB5ZXMNCi0tLQ0KDQpgYGB7ciwgZ2xvYmFsc2V0dGluZ3MsIGVjaG89RkFMU0UsIHdhcm5pbmc9RkFMU0UsIHJlc3VsdHM9J2hpZGUnfQ0KbGlicmFyeShrbml0cikNCmtuaXRyOjpvcHRzX2NodW5rJHNldChlY2hvID0gVFJVRSkNCm9wdHNfY2h1bmskc2V0KHRpZHkub3B0cz1saXN0KHdpZHRoLmN1dG9mZj0xMDApLHRpZHk9VFJVRSwgd2FybmluZyA9IEZBTFNFLCBtZXNzYWdlID0gRkFMU0UsY29tbWVudCA9ICIjPiIsIGNhY2hlPVRSVUUsIGNsYXNzLnNvdXJjZT1jKCJ0ZXN0IiksIGNsYXNzLm91dHB1dD1jKCJ0ZXN0MyIpKQ0Kb3B0aW9ucyh3aWR0aCA9IDEwMCkNCnJnbDo6c2V0dXBLbml0cigpDQoNCmNvbG9yaXplIDwtIGZ1bmN0aW9uKHgsIGNvbG9yKSB7c3ByaW50ZigiPHNwYW4gc3R5bGU9J2NvbG9yOiAlczsnPiVzPC9zcGFuPiIsIGNvbG9yLCB4KSB9DQpgYGANCg0KDQpgYGB7ciBrbGlwcHksIGVjaG89RkFMU0UsIGluY2x1ZGU9VFJVRX0NCmtsaXBweTo6a2xpcHB5KHBvc2l0aW9uID0gYygndG9wJywgJ3JpZ2h0JykpDQoja2xpcHB5OjprbGlwcHkoY29sb3IgPSAnZGFya3JlZCcpDQoja2xpcHB5OjprbGlwcHkodG9vbHRpcF9tZXNzYWdlID0gJ0NsaWNrIHRvIGNvcHknLCB0b29sdGlwX3N1Y2Nlc3MgPSAnRG9uZScpDQpgYGANCg0KDQotLS0gIA0KDQoNClRvIGNvcHkgdGhlIGNvZGUsIGNsaWNrIHRoZSBidXR0b24gaW4gdGhlIHVwcGVyIHJpZ2h0IGNvcm5lciBvZiB0aGUgY29kZS1jaHVua3MuDQoNCiMgR2V0dGluZyBzdGFydGVkDQoNCiMjIGNsZWFuIHVwDQoNCmBgYHtyLCByZXN1bHRzPSdoaWRlJ30NCnJtKGxpc3Q9bHMoKSkNCmdjKCkNCmBgYA0KDQo8YnI+DQoNCiMjIGdlbmVyYWwgY3VzdG9tIGZ1bmN0aW9ucw0KDQotIGBmcGFja2FnZS5jaGVja2A6IENoZWNrIGlmIHBhY2thZ2VzIGFyZSBpbnN0YWxsZWQgKGFuZCBpbnN0YWxsIGlmIG5vdCkgaW4gUg0KLSBgZnNhdmVgOiBGdW5jdGlvbiB0byBzYXZlIGRhdGEgd2l0aCB0aW1lIHN0YW1wIGluIGNvcnJlY3QgZGlyZWN0b3J5DQotIGBmbG9hZGA6IEZ1bmN0aW9uIHRvIGxvYWQgUi1vYmplY3RzIHVuZGVyIG5ldyBuYW1lcw0KDQpgYGB7ciwgcmVzdWx0cz0naGlkZScsIG1lc3NhZ2U9RkFMU0UsIHdhcm5pbmc9RkFMU0V9DQpmcGFja2FnZS5jaGVjayA8LSBmdW5jdGlvbihwYWNrYWdlcykgew0KICAgIGxhcHBseShwYWNrYWdlcywgRlVOID0gZnVuY3Rpb24oeCkgew0KICAgICAgICBpZiAoIXJlcXVpcmUoeCwgY2hhcmFjdGVyLm9ubHkgPSBUUlVFKSkgew0KICAgICAgICAgICAgaW5zdGFsbC5wYWNrYWdlcyh4LCBkZXBlbmRlbmNpZXMgPSBUUlVFKQ0KICAgICAgICAgICAgbGlicmFyeSh4LCBjaGFyYWN0ZXIub25seSA9IFRSVUUpDQogICAgICAgIH0NCiAgICB9KQ0KfQ0KDQpmc2F2ZSA8LSBmdW5jdGlvbih4LCBmaWxlLCBsb2NhdGlvbiA9ICIuL2RhdGEvcHJvY2Vzc2VkLyIsIC4uLikgew0KICAgIGlmICghZGlyLmV4aXN0cyhsb2NhdGlvbikpDQogICAgICAgIGRpci5jcmVhdGUobG9jYXRpb24pDQogICAgZGF0ZW5hbWUgPC0gc3Vic3RyKGdzdWIoIls6LV0iLCAiIiwgU3lzLnRpbWUoKSksIDEsIDgpDQogICAgdG90YWxuYW1lIDwtIHBhc3RlKGxvY2F0aW9uLCBkYXRlbmFtZSwgZmlsZSwgc2VwID0gIiIpDQogICAgcHJpbnQocGFzdGUoIlNBVkVEOiAiLCB0b3RhbG5hbWUsIHNlcCA9ICIiKSkNCiAgICBzYXZlKHgsIGZpbGUgPSB0b3RhbG5hbWUpDQp9DQoNCg0KZmxvYWQgIDwtIGZ1bmN0aW9uKGZpbGVOYW1lKXsNCiAgbG9hZChmaWxlTmFtZSkNCiAgZ2V0KGxzKClbbHMoKSAhPSAiZmlsZU5hbWUiXSkNCn0NCmBgYA0KDQo8YnI+DQoNCiMjIG5lY2Vzc2FyeSBwYWNrYWdlcw0KDQotIGB0aWR5dmVyc2VgOiBkYXRhIHdyYW5nbGluZw0KLSBgbWxvZ2l0YDogbXVsdGlub21pYWwgbG9naXQNCi0gYGtuaXRyYDogZ2VuZXJhdGluZyB0YWJsZXMNCi0gYGthYmxlRXh0cmFgOiBtYW5pcHVsYXRpbmcgdGFibGVzDQoNCmBgYHtyLCByZXN1bHRzPSdoaWRlJywgbWVzc2FnZT1GQUxTRSwgd2FybmluZz1GQUxTRX0NCnBhY2thZ2VzID0gYygidGlkeXZlcnNlIiwgIm1sb2dpdCIsICJrbml0ciIsICJrYWJsZUV4dHJhIiwgInN0YXJnYXplciIpDQpmcGFja2FnZS5jaGVjayhwYWNrYWdlcykNCmBgYA0KDQo8YnI+DQoNCiMjIGxvYWQgaW4gbWxvZ2l0IGRhdGENCmBgYHtyLCBldmFsPUZ9DQojZ2V0IHRvZGF5cyBkYXRlOg0KdG9kYXkgPC0gZ3N1YigiLSIsICIiLCBTeXMuRGF0ZSgpKQ0KDQppb19tbCA8LSBmbG9hZChwYXN0ZTAoIi4vZGF0YS9wcm9jZXNzZWQvIix0b2RheSwiaW9fbWwuUkRhdGEiKSkNCg0Kcm0gKHRvZGF5KQ0KYGBgDQoNCjxicj4NCg0KIyBydW4gbW9kZWwNCg0KYGBge3IsIGV2YWw9RkFMU0V9DQojbWFpbg0KbTEgPC0gbWxvZ2l0KGNob2ljZSB+IGNvbXBhcmlzb24gKyBrbm93bGVkZ2UgKyBjb21wYW5pb25zaGlwICsgZW5jb3VyYWdlbWVudCB8IDAsIGRhdGEgPSBpb19tbCkNCiNzdW1tYXJ5KG0xKQ0KDQojaW50ZXJhY3Rpb24gd2l0aCBnZW5kZXINCm0yIDwtIG1sb2dpdChjaG9pY2UgfiBjb21wYXJpc29uICsga25vd2xlZGdlICsgY29tcGFuaW9uc2hpcCArIGVuY291cmFnZW1lbnQgKyBjb21wYXJpc29ubG93LkZFTUFMRSArIGNvbXBhcmlzb25tZWRpdW0uRkVNQUxFICsga25vd2xlZGdlbG93LkZFTUFMRSArIGtub3dsZWRnZW1lZGl1bS5GRU1BTEUgKyBjb21wYW5pb25zaGlwbG93LkZFTUFMRSArIGNvbXBhbmlvbnNoaXBtZWRpdW0uRkVNQUxFICsgZW5jb3VyYWdlbWVudGxvdy5GRU1BTEUgKyBlbmNvdXJhZ2VtZW50bWVkaXVtLkZFTUFMRSB8IDAsIGRhdGEgPSBpb19tbCkNCiNzdW1tYXJ5KG0yKQ0KDQojaW50ZXJhY2l0b24gd2l0aCBhY3RpdmUgKHllcy9ubykNCm0zIDwtIG1sb2dpdChjaG9pY2UgfiBjb21wYXJpc29uICsga25vd2xlZGdlICsgY29tcGFuaW9uc2hpcCArIGVuY291cmFnZW1lbnQgKyBjb21wYXJpc29ubG93LkFDVElWRSArIGNvbXBhcmlzb25tZWRpdW0uQUNUSVZFICsga25vd2xlZGdlbG93LkFDVElWRSArIGtub3dsZWRnZW1lZGl1bS5BQ1RJVkUgKyBjb21wYW5pb25zaGlwbG93LkFDVElWRSArIGNvbXBhbmlvbnNoaXBtZWRpdW0uQUNUSVZFICsgZW5jb3VyYWdlbWVudGxvdy5BQ1RJVkUgKyBlbmNvdXJhZ2VtZW50bWVkaXVtLkFDVElWRSB8IDAsIGRhdGEgPSBpb19tbCkNCiNzdW1tYXJ5KG0zKQ0KDQojc2F2ZSBvdXRwcHV0IGluIGh0bWwgdGFibGUNCiMjc3RhcmdhemVyKG0xLG0yLG0zLCB0eXBlPSJ0ZXh0IikNCg0Kc3RhcmdhemVyKG0xLG0yLG0zLCANCiAgICAgICAgICB0eXBlPSJodG1sIiwgDQogICAgICAgICAgdGl0bGU9Ik11bHRpbm9taWFsIGxvZ2l0IG1vZGVsIHJlc3VsdHMiLCANCiAgICAgICAgICBkZXAudmFyLmxhYmVscyA9ICJTcG9ydHMgcGFydG5lciBjaG9pY2UiLA0KICAgICAgICAgIGNvdmFyaWF0ZS5sYWJlbHMgPSBjKCJkb2VzIG5vdCBsaWtlIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyIsICJzb21ld2hhdCBsaWtlcyB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiLCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAia25vd3MgbGVzcyB0aGFuIHlvdSBhYm91dCBlZmZlY3RpdmUgdHJhaW5pbmcgYW5kIHRoZSByaWdodCB0ZWNobmlxdWUiLCAia25vd3MgYXMgbXVjaCBhcyB5b3UgYWJvdXQgZWZmZWN0aXZlIHRyYWluaW5nIGFuZCB0aGUgcmlnaHQgdGVjaG5pcXVlIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAiZXhlcmNpc2VzIHB1cnBvc2VmdWxseSBhbmQgc2VyaW91c2x5IiwgIndhbnRzIGEgY29tYmluYXRpb24gb2Ygc29jaWFsIGludGVyYWN0aW9uIGFuZCBwdXJwb3NlZnVsIHRyYWluaW5nIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAibmV2ZXIgZW5jb3VyYWdlcyB5b3UiLCAic29tZXRpbWVzIGVuY291cmFnZXMgeW91IiwgDQogICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgcGFzdGUwKGMoImRvZXMgbm90IGxpa2UgdG8gY29tcGFyZSBzcG9ydHMgcGVyZm9ybWFuY2VzIiwgInNvbWV3aGF0IGxpa2VzIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyIsIA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJrbm93cyBsZXNzIHRoYW4geW91IGFib3V0IGVmZmVjdGl2ZSB0cmFpbmluZyBhbmQgdGhlIHJpZ2h0IHRlY2huaXF1ZSIsICJrbm93cyBhcyBtdWNoIGFzIHlvdSBhYm91dCBlZmZlY3RpdmUgdHJhaW5pbmcgYW5kIHRoZSByaWdodCB0ZWNobmlxdWUiLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJleGVyY2lzZXMgcHVycG9zZWZ1bGx5IGFuZCBzZXJpb3VzbHkiLCAid2FudHMgYSBjb21iaW5hdGlvbiBvZiBzb2NpYWwgaW50ZXJhY3Rpb24gYW5kIHB1cnBvc2VmdWwgdHJhaW5pbmciLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICJuZXZlciBlbmNvdXJhZ2VzIHlvdSIsICJzb21ldGltZXMgZW5jb3VyYWdlcyB5b3UiKSwiKmZlbWFsZSIpLA0KICAgICAgICAgICAgICAgICAgICAgICAgICAgICAgIHBhc3RlMChjKCJkb2VzIG5vdCBsaWtlIHRvIGNvbXBhcmUgc3BvcnRzIHBlcmZvcm1hbmNlcyIsICJzb21ld2hhdCBsaWtlcyB0byBjb21wYXJlIHNwb3J0cyBwZXJmb3JtYW5jZXMiLCANCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAia25vd3MgbGVzcyB0aGFuIHlvdSBhYm91dCBlZmZlY3RpdmUgdHJhaW5pbmcgYW5kIHRoZSByaWdodCB0ZWNobmlxdWUiLCAia25vd3MgYXMgbXVjaCBhcyB5b3UgYWJvdXQgZWZmZWN0aXZlIHRyYWluaW5nIGFuZCB0aGUgcmlnaHQgdGVjaG5pcXVlIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAiZXhlcmNpc2VzIHB1cnBvc2VmdWxseSBhbmQgc2VyaW91c2x5IiwgIndhbnRzIGEgY29tYmluYXRpb24gb2Ygc29jaWFsIGludGVyYWN0aW9uIGFuZCBwdXJwb3NlZnVsIHRyYWluaW5nIiwNCiAgICAgICAgICAgICAgICAgICAgICAgICAgICAgICAibmV2ZXIgZW5jb3VyYWdlcyB5b3UiLCAic29tZXRpbWVzIGVuY291cmFnZXMgeW91IiksIiphY3RpdmUiKSksDQogICAgICAgICAgc2luZ2xlLnJvdz1GQUxTRSwgYWxpZ24gPSBUUlVFLCBkaWdpdHM9Miwgb3V0ID0gIi4vcmVzdWx0cy9tb2RlbHMuaHRtbCIpDQpgYGANCg0KDQoNCg0KPGJyPg0KDQoNCiMgb3V0cHV0DQoNCg0KYGBge3IsIGVjaG89RkFMU0V9DQpodG1sdG9vbHM6OmluY2x1ZGVIVE1MKCIuL3Jlc3VsdHMvbW9kZWxzLmh0bWwiKQ0KDQpgYGANCg0KDQo8YnI+DQoNCiMjIyBvYnNlcnZhdGlvbnMNCg0KMS4gQ29tcGFyaXNvbjogcmVzcG9uZGVudHMgcHJlZmVyIGEgc3BvcnRzIHBhcnRuZXIgd2hvIHBsYWNlcyBhbiBhcHByb3ByaWF0ZSBhbW91bnQgb2YgZW1waGFzaXMgb24gc29jaWFsIGNvbXBhcmlzb24g4oCUIG5vdCB0b28gbXVjaCBhbmQgbm90IHRvbyBsaXR0bGUuDQoNCjIuIEtub3dsZWRnZTogcmVzcG9uZGVudHMgZG9uJ3Qgd2FudCBhIHNwb3J0cyBwYXJ0bmVyIHRoYXQga25vd3MgbGVzcyBhYm91dCB0cmFpbmluZyBhbmQgdGVjaG5pcXVlIHRoYW4gdGhlbXNlbHZlcy4gDQoNCjMuIFNvY2lhbDogcmVzcG9uZGVudHMgc2VlbSB0byBmYXZvciBzb21lb25lIHdobyBjb21iaW5lcyBoYXZpbmcgZnVuIGFuZCBiZWluZyBnb2FsLW9yaWVudGVkIHdoaWxlIHRyYWluaW5nOyBob3dldmVyLCB0aGV5IGFwcGVhciB0byBwcmVmZXIgZXhlcmNpc2luZyBmb3IgZnVuIG92ZXIgZG9pbmcgc28gc29sZWx5IHNlcmlvdXNseQ0KDQo0LiBFbmNvdXJhZ2VtZW50OiByZXNwb25kZW50cyBwcmVmZXIgYSBzcG9ydHMgcGFydG5lciB0aGF0IHJlZ3VsYXJseSBlbmNvdXJhZ2VzIHRoZW0uDQoNCg0KDQpCb3RoIGdlbmRlcnMgd29uJ3QgY2hvb3NlIGEgc3BvcnRzIHBhcnRuZXIgd2hvIHBsYWNlcyBncmVhdCBlbXBoYXNpcyBvbiBzb2NpYWwgY29tcGFyaXNvbiBhbmQgY29tcGV0aXRpb24uIEhvd2V2ZXIsIG1hbGVzIGdlbmVyYWxseSBwcmVmZXIgYSBzcG9ydHMgcGFydG5lciB3aG8gcGxhY2VzIHNvbWUgZW1waGFzaXMgb24gc29jaWFsIGNvbXBhcmlzb24sIHdoZXJlYXMgZmVtYWxlcyBzaG93IG5vIHNpZ25pZmljYW50IGRpZmZlcmVuY2UgaW4gdGhlaXIgcHJlZmVyZW5jZSBmb3IgYSBwYXJ0bmVyIHdobyBwbGFjZXMgbGl0dGxlIG9yIG5vIGVtcGhhc2lzIG9uIHNvY2lhbCBjb21wYXJpc29uLiBJbiBsaW5lIHdpdGggdGhlIGlkZWEgdGhhdCBtYWxlIHNwb3J0cyBwYXJ0aWNpcGF0aW9uIGlzIGRyaXZlbiB0byBhIGdyZWF0ZXIgZXh0ZW50IGJ5IHN0YXR1cy9jb21wZXRpdGlvbiB0aGFuIGZlbWFsZXMgKHdobyB3ZXJlIGV4cGVjdGVkIHRvIGJlIG1vcmUgZHJpdmVuIGJ5IGFmZmlsaWF0aW9uLCB3aGljaCBpcyBub3QgYXBwYXJlbnQgZnJvbSB0aGUgbW9kZWwgcmVzdWx0cykuDQoNCg0KU2ltaWxhciBwYXR0ZXJuOiB0aG9zZSBjdXJyZW50bHkgYWN0aXZlIHByZWZlciBzcG9ydHMgcGFydG5lcnMgd2hvIHBsYWNlIGFuIGFwcHJvcHJpYXRlIGFtb3VudCBvZiBlbXBoYXNpcyBvbiBzb2NpYWwgY29tcGFyaXNvbiAobm90IHRvbyBtdWNoLCBub3QgdG9vIGxpdHRsZSkuIFRob3NlIGN1cnJlbnRseSBpbmFjdGl2ZSBkbyBub3Q6IHRoZXkgZGlzbGlrZSBncmVhdCBlbXBoYXNpcyBvbiBzb2NpYWwgY29tcGFyaXNvbi9jb21wZXRpdGlvbiwgYnV0IGRvIG5vdCBwcmVmZXIgYSBsaXR0bGUgb3ZlciBubyBlbXBoYXNpcyBvbiBzb2NpYWwgY29tcGFyaXNvbi4gQWdhaW4sIGluIGxpbmUgd2l0aCB0aGUgZXhwZWN0YXRpb24uIEN1cnJlbnRseSwgbm8gbm90YWJsZSBkaWZmZXJlbmNlIGluIGltcG9ydGFuY2Ugb2Ygc29jaWFsLWVtb3Rpb25hbCBtb3RpdmVzIChpLmUuLCBlbmNvdXJhZ2VtZW50LCBhZmZpbGlhdGlvbikuDQoNCk5vdGUgdGhhdCB0aGUgZ2VuZGVycyBkbyBoYXJkbHkgZGlmZmVyIGluIHdoZXRoZXIgb3Igbm90IHRoZXkgYXJlIGN1cnJlbnRseSBhY3RpdmUgW3IoZmVtYWxlLCBhY3RpdmUpIDwgLTAuMDJdLg0KDQoNCg0KDQo=</div>
 <style>
 .center {
   text-align: center;
