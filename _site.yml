@@ -19,14 +19,10 @@ navbar:
       href: prep.html
     - icon: fa fa-bar-chart
       text: "Analyses"
-      menu:
-      - text: "1. Descriptives"
-        href: des.html
-      - text: "2. Models"
-        href: analyse.html
-#  right:
-#    - icon: fab fa-github
-#      href: https://github.com/robfranken/networkchange
+      href: analyse.html
+  right:
+    - icon: fab fa-github
+      href: https://github.com/robfranken/DCE_sports
 output:
   html_document:
     theme: flatly

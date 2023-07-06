@@ -481,7 +481,7 @@ below 0.33 indicate features that reduce the attractiveness of
 alternatives.</p>
 <pre class="r test"><code>f1 &lt;- choice ~ comparison + knowledge + companionship + encouragement
 plot(cregg::mm(data, f1, id=~id), vline=1/3)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-5-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-5-1.png" width="960" /></p>
 <p><br></p>
 </div>
 <div id="average-marginal-component-effect" class="section level1"
@@ -683,7 +683,7 @@ never encourages you
 </table>
 </div>
 <pre class="r test"><code>plot(amces)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-6-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-6-1.png" width="960" /></p>
 <style>
 .scrollbox {
   max-height: 400px; /* Specify the maximum height of the scrollbox */
@@ -707,7 +707,7 @@ plot3 &lt;- plot(amce_diagnostic3, group = &quot;REFERENCE&quot;, legend_title =
 plot4 &lt;- plot(amce_diagnostic4, group = &quot;REFERENCE&quot;, legend_title = &quot;Ref. cat.&quot;)
 
 multiplot &lt;- gridExtra::grid.arrange(plot1,plot2,plot3,plot4,ncol=1)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-7-1.png" width="1152" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-7-1.png" width="1152" /></p>
 </div>
 <p><br></p>
 </div>
@@ -721,7 +721,7 @@ means</h2>
 within-respondents across multiple conjoint choice-tasks:</p>
 <pre class="r test"><code>mm_byset &lt;- cregg::cj(data, f1, id = ~id, estimate = &quot;mm&quot;, by = ~set)
 plot(mm_byset, group = &quot;set&quot;, vline = 1/3)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-8-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-8-1.png" width="960" /></p>
 <p><br></p>
 </div>
 <div id="test-of-preference-heterogeneity" class="section level2"
@@ -757,7 +757,7 @@ data$Sex &lt;- factor(data$Sex, 1:2, c(&quot;Male&quot;, &quot;Female&quot;))
 
 x &lt;- cregg::cj(na.omit(data), f1, id = ~id, estimate = &quot;mm&quot;, by = ~Sex)
 plot(x, group = &quot;Sex&quot;, vline=1/3)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-10-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-10-1.png" width="960" /></p>
 </div>
 <div id="conditional-amces" class="section level3" number="5.3.2">
 <h3><span class="header-section-number">5.3.2</span> Conditional
@@ -2077,7 +2077,7 @@ Female
 </table>
 </div>
 <pre class="r test"><code>plot(rbind(amces, diff_amces)) + ggplot2::facet_wrap(~BY, ncol = 3L)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-11-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-11-1.png" width="960" /></p>
 <p><br></p>
 </div>
 </div>
@@ -2096,7 +2096,7 @@ data$Active &lt;- factor(data$Active, 1:2, c(&quot;No&quot;, &quot;Yes&quot;))
 
 x &lt;- cregg::cj(data, f1, id = ~id, estimate = &quot;mm&quot;, by = ~Active)
 plot(x, group = &quot;Active&quot;, vline=1/3)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-12-1.png" width="960" /></p>
 </div>
 <div id="conditional-amces-1" class="section level3" number="5.4.2">
 <h3><span class="header-section-number">5.4.2</span> Conditional
@@ -3417,7 +3417,7 @@ Yes
 </table>
 </div>
 <pre class="r test"><code>plot(rbind(amces, diff_amces)) + ggplot2::facet_wrap(~BY, ncol = 3L)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-13-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-13-1.png" width="960" /></p>
 <p><br></p>
 </div>
 </div>
@@ -3430,7 +3430,7 @@ activity levels</h2>
 <pre class="r test"><code>data$Frequency &lt;- NA_real_
 
 hist(as.numeric(data$sportsfreq,na.rm=TRUE))</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-14-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-14-1.png" width="960" /></p>
 <pre class="r test"><code>ftable(psych::describe(data$sportsfreq,na.rm=TRUE), caption= &quot;Running frequency statistics&quot;)</code></pre>
 <div
 style="border: 1px solid #ddd; padding: 0px; overflow-y: scroll; height:300px; ">
@@ -3538,7 +3538,7 @@ data$Frequency &lt;- factor(data$Frequency, 1:2, c(&quot;Low frequency&quot;, &q
 
 x &lt;- cregg::cj(na.omit(data), f1, id = ~id, estimate = &quot;mm&quot;, by = ~Frequency)
 plot(x, group = &quot;Frequency&quot;, vline=1/3)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-14-2.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-14-2.png" width="960" /></p>
 </div>
 <div id="conditional-amces-2" class="section level3" number="5.5.2">
 <h3><span class="header-section-number">5.5.2</span> Conditional
@@ -4859,7 +4859,7 @@ High frequency
 </table>
 </div>
 <pre class="r test"><code>plot(rbind(amces, diff_amces)) + ggplot2::facet_wrap(~BY, ncol = 3L)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-15-1.png" width="960" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-15-1.png" width="960" /></p>
 <p><br></p>
 </div>
 </div>
@@ -4883,7 +4883,7 @@ plot3 &lt;- plot(acies3)
 plot4 &lt;- plot(acies4)
 
 multiplot &lt;- gridExtra::grid.arrange(plot1,plot2,plot3,plot4,ncol=1)</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-16-1.png" width="1152" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-16-1.png" width="1152" /></p>
 </div>
 <p><br></p>
 </div>
@@ -4893,7 +4893,7 @@ multiplot &lt;- gridExtra::grid.arrange(plot1,plot2,plot3,plot4,ncol=1)</code></
 <h2><span class="header-section-number">7.1</span> Frequencies</h2>
 <p>Of conjoint features (to ensure equal display frequency):</p>
 <pre class="r test"><code>plot(cregg::cj_freqs(data, choice ~ comparison + knowledge + companionship + encouragement + Sex + Active + Frequency, id = ~id))</code></pre>
-<p><img src="analyse_files/figure-html/unnamed-chunk-17-1.png" width="1152" /></p>
+<p><img src="test_files/figure-html/unnamed-chunk-17-1.png" width="1152" /></p>
 <hr />
 </div>
 </div>
@@ -4946,7 +4946,7 @@ $(document).ready(function () {
 <!-- code folding -->
 <script>
 $(document).ready(function () {
-  window.initializeSourceEmbed("analyse.Rmd");
+  window.initializeSourceEmbed("test.Rmd");
   window.initializeCodeFolding("show" === "show");
 });
 </script>

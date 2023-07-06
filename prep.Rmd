@@ -52,6 +52,7 @@ gc()
 - `fpackage.check`: Check if packages are installed (and install if not) in R
 - `fsave`: Function to save data with time stamp in correct directory
 - `fload`: Function to load R-objects under new names
+- `ftable`: html tables using `knitr`
 
 ```{r, eval=FALSE}
 fpackage.check <- function(packages) {
@@ -77,6 +78,12 @@ fload  <- function(fileName){
   load(fileName)
   get(ls()[ls() != "fileName"])
 }
+
+ftable <- function(x, caption=NULL) {
+  knitr::kable(x, digits=2, "html", caption=caption) %>%
+    kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
+    kableExtra::scroll_box(height="300px")
+}
 ```
 
 <br>
@@ -92,148 +99,11 @@ fload  <- function(fileName){
 ```{r, eval=FALSE}
 packages = c("tidyverse", "mlogit", "haven", "sjlabelled", "reshape2")
 fpackage.check(packages)
+rm(packages)
 ```
 
 <br>
 
-
-<!---
-
----
-
-# Sports & Friendships
-
-## load in raw data
-
-I load in raw, non-public data of the second wave of the survey project *Sports & Friendships* [Franken et al., -@data2022]. This wave contains the DCE data. The data were deposited in [DANS EASY](link).
-
-```{r,eval=F}
-data1 <- read.csv("./rawdata/results-survey938243.csv")
-data2 <- read.csv("./rawdata/results-survey868275.csv")
-```
-
-<br>
-
-## data wrangling
-
-```{r,eval=F}
-#copy data2 with dce data
-df <- data2
-
-# first, delete fake response;
-fakeid <- which(df$email  %in% "rob.franken@ru.nl")
-df <- df[-fakeid,]
-
-# match covariates of w1 (here, gender)
-data1$gender <- data1$A1
-covars <- data1[,c("gender", "email")]
-
-df <- merge(df,covars,by="email")
-
-# add id 
-df$id <- 1:nrow(df)
-
-# to long format
-
-# each list element contains the choices for each set. thus presatielist[[2]][3] is the
-# 'presatie'-attribute of person 3, in choice set 2
-
-prestatielist <- list()
-prestatielist[[1]] <- c("attribute_16", "attribute_17", "attribute_18")
-prestatielist[[2]] <- c("attribute_19", "attribute_20", "attribute_31")
-prestatielist[[3]] <- c("attribute_32", "attribute_33", "attribute_34")
-
-kennislist <- list()
-kennislist[[1]] <- c("attribute_35", "attribute_36", "attribute_37")
-kennislist[[2]] <- c("attribute_38", "attribute_39", "attribute_40")
-kennislist[[3]] <- c("attribute_41", "attribute_42", "attribute_43")
-
-gezelliglist <- list()
-gezelliglist[[1]] <- c("attribute_44", "attribute_45", "attribute_46")
-gezelliglist[[2]] <- c("attribute_47", "attribute_48", "attribute_49")
-gezelliglist[[3]] <- c("attribute_50", "attribute_51", "attribute_52")
-
-esteemlist <- list()
-esteemlist[[1]] <- c("attribute_53", "attribute_54", "attribute_55")
-esteemlist[[2]] <- c("attribute_56", "attribute_57", "attribute_58")
-esteemlist[[3]] <- c("attribute_59", "attribute_60", "attribute_61")
-
-chosen <- c("CS1", "CS2", "CS3")
-
-
-for (set in 1:3) {
-    # to long format
-    
-  for (choice in 1:3) {
-
-        data <- as.data.frame(df)
-        data$set <- set
-        data$options <- choice
-        data$prestatie <- data[, names(data) == prestatielist[[set]][choice]]
-        data$kennis <- data[, names(data) == kennislist[[set]][choice]]
-        data$gezellig <- data[, names(data) == gezelliglist[[set]][choice]]
-        data$esteem <- data[, names(data) == esteemlist[[set]][choice]]
-        data$chosen <- data[, names(data) == chosen[set]]
-        data <- data[, names(data) %in% c("id", "gender", "set", "options", "prestatie", "kennis", "gezellig",
-            "esteem", "chosen")]
-        if (set == 1 & choice == 1) {
-            df_long <- data
-        } else {
-            df_long <- rbind(df_long, data)
-        }
-    }
-}
-
-# order
-df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
-
-# define the choice
-df_long$choice <- (df_long$chosen == c("Persoon 1", "Persoon 2", "Persoon 3")[df_long$options])
-```
-
-
-
-<br>
-
-## make ready for mlogit
-
-```{r, eval=F}
-# first we need an id_alt (identification of alternatives), thus specific combi of facets
-{
-    df_long$id_alt <- as.numeric(as.factor(trimws(df_long$prestatie))) * 1000 + as.numeric(as.factor(trimws(df_long$kennis))) *
-        100 + as.numeric(as.factor(trimws(df_long$gezellig))) * 10 + as.numeric(as.factor(trimws(df_long$esteem)))
-
-}
-
-# we also need an id for each specific choice set, thus combi of respnr and set
-df_long$id_choice <- df_long$id * 10 + df_long$set
-
-length(unique(df_long$id))
-length(unique(df_long$id_choice))
-sum(df_long$choice)#no missings on choice. !be aware these need to be deleted for mlogit. 
-
-# need to delete id_choice where no choice is made
-
-# do we have duplicates?
-df_long %>%
-    select(c("id_choice", "id_alt")) -> df_sel
-dups <- duplicated(df_sel)
-sum(dups)
-
-# and with no duplicates and no choice sets without choices, this should work 
-df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt",
-    shape = "long")
-```
-
-<br>
-
-## save data object
-```{r, eval=F}
-fsave(df_ml, "abs_ml.RData")
-```
-<br>
-
--->
 
 ---
 
@@ -264,7 +134,7 @@ df1. <- df1[which(df1$SAMPLE_ID %in% df2$SAMPLE_ID), ]
 # interaction variables
 # current involvement
 #df2$V5
-df2$activeW2 <- ifelse(df2$V5 == 1, 0, 1)
+df2$activeW2 <- ifelse(df2$V5 == 1, "no", "yes")
 prop.table(table(df2$activeW2, useNA = "always")) #64 percent currently active, at w2
 
 #number of sports
@@ -277,44 +147,12 @@ sport2 <- ifelse(df2$V6b==1, 7, ifelse(df2$V6b==2, 4, ifelse(df2$V6b==3, 1.5, if
 sport3 <- ifelse(df2$V6c==1, 7, ifelse(df2$V6c==2, 4, ifelse(df2$V6c==3, 1.5, ifelse(df2$V6c==4, 0.5, NA))))
 
 df2$sportsfreq <- NA
-df2$sportsfreq[which(df2$activeW2==1)] <- rowSums(cbind(sport1,sport2,sport3)[which(df2$activeW2==1),], na.rm=TRUE)
+df2$sportsfreq[which(df2$activeW2=="yes")] <- rowSums(cbind(sport1,sport2,sport3)[which(df2$activeW2=="yes"),], na.rm=TRUE)
 
 #table(df2$sportsfreq)
 #cap at 14, only 1 higher.
 df2$sportsfreq <- ifelse(df2$sportsfreq>14, 14, df2$sportsfreq)
 #psych::describe(df2$sportsfreq)
-
-#wave 2 sport variables
-#df2$V5 #afgelopen maand sport (geen, 1, 2 of 3)
-#df2$V6 #frequentie (dagelijk, 3-5, 1-2 keer per week; 1-3 keer per maand)
-#df2$V7a_1 #verband (e.g., sportclub, fitnesscentrum)
-#df2$V8a_6 #met wie (samen vs. alleen)
-
-#wave 1 sport variables
-df1.$activeW1 <- ifelse(df1.$V5 == 1, 0, 1) #past month
-df1.$active.educ <- ifelse(df1.$V17 == 1, 0, 1) #last year (full time) education
-df1.$active.laborm <- ifelse(df1.$V21 == 1, 0, 1) #year after transition to labor market
-df1.$active.child <- ifelse(df1.$V39 == 1, 0, 1) #year before first child
-df1.$active.child1 <- ifelse(df1.$V47 == 1, 0, 1) #year when first child was 1 year old
-df1.$active.prim <- ifelse(df1.$V70 == 1, 0, 1) #last 2 years of primary school
-df1.$active.sec <- ifelse(df1.$V75 == 1, 0, 1) #last years secondary school
-
-#subset these variables about sports history/timeline
-df1.. <- df1.[, c("activeW1", "active.educ", "active.laborm", "active.child", "active.child1", "active.prim", "active.sec", "SAMPLE_ID")]
-
-#merge with df2
-df2 <- merge( df2, df1.., by = "SAMPLE_ID") 
-
-#construct "life-course sports continuity index", as number of stages in which one was active divided by the number of applicable phases.
-df2$activity.index  <- NA
-for (i in 1:nrow(df2)) { 
-  #subset activity variables
-  act <- df2[i, c("activeW2", "activeW1", "active.educ", "active.child1", "active.child", "active.laborm", "active.sec", "active.prim")]
-  #exclude NA
-  act.rna <- act[!is.na(act)]
-  #ratio
-  df2$activity.index[i] <-  length(which(act.rna==1)) / length(act.rna)
-}
 
 #subset dce data and relevant covariates
 #names(df2)
@@ -325,9 +163,8 @@ df <- df2[, c(
   289, 299)#gender, sports frequency weekly
   ]
 
-#gender to binary, [0,1]
-df$female <- ifelse(df$GESLACHT2==1,0,1)
-df$female[is.na(df$female)] <- 1
+#gender
+df$gender <- ifelse(df$GESLACHT2==1,"man",ifelse(df$GESLACHT2==2,"woman", "other"))
 
 #attach id
 df$id <- 1:nrow(df)
@@ -374,7 +211,8 @@ for (set in 1:3) {
         data$companionship <- data[, names(data) == gezelliglist[[set]][choice]]
         data$encouragement <- data[, names(data) == esteemlist[[set]][choice]]
         data$chosen <- data[, names(data) == chosen[set]]
-        data <- data[, names(data) %in% c("id", "female", "activeW2", "activity.index", "sportsfreq", "set", "options", "comparison", "knowledge", "companionship",
+        
+        data <- data[, names(data) %in% c("id", "gender", "activeW2", "sportsfreq", "set", "options", "comparison", "knowledge", "companionship",
             "encouragement", "chosen")]
         if (set == 1 & choice == 1) {
             df_long <- data
@@ -391,69 +229,54 @@ df_long <- df_long[order(df_long$id, df_long$set, df_long$options), ]
 df_long$choice <- (df_long$chosen == c(1, 2, 3)[df_long$options])
 
 #recode number into answer
-df_long$comparison <- ifelse(df_long$comparison == 1, "high", #"really likes to compare sports performances",
-                             ifelse(df_long$comparison == 2, "medium", #"somewhat likes to compare sports performances",
-                             ifelse(df_long$comparison == 3, "low", NA))) # "does not like to compare sports performances", NA)))
+df_long$comparison <- ifelse(df_long$comparison == 1, "really likes to compare sports performances",
+                             ifelse(df_long$comparison == 2, "somewhat likes to compare sports performances",
+                             ifelse(df_long$comparison == 3, "does not like to compare sports performances", NA)))
 
-df_long$knowledge <- ifelse(df_long$knowledge == 1, "high", # "knows more than you about effective training and the right technique",
-                             ifelse(df_long$knowledge == 2, "medium", # "knows as much as you about effective training and the right technique",
-                             ifelse(df_long$knowledge == 3, "low", NA))) # "knows less than you about effective training and the right technique", NA)))
+df_long$knowledge <- ifelse(df_long$knowledge == 1, "knows more than you about effective training and the right technique",
+                             ifelse(df_long$knowledge == 2, "knows as much as you about effective training and the right technique",
+                             ifelse(df_long$knowledge == 3, "knows less than you about effective training and the right technique", NA))) 
 
-df_long$companionship <- ifelse(df_long$companionship == 1, "high", # "exercises to socially engage",
-                             ifelse(df_long$companionship == 2, "medium", #"wants a combination of social interaction and purposeful training",
-                             ifelse(df_long$companionship == 3, "low", NA))) #"exercises purposefully and seriously", NA)))
+df_long$companionship <- ifelse(df_long$companionship == 1, "exercises to socially engage",
+                             ifelse(df_long$companionship == 2, "wants a combination of social interaction and purposeful training",
+                             ifelse(df_long$companionship == 3, "exercises purposefully and seriously", NA)))
 
-df_long$encouragement <- ifelse(df_long$encouragement == 1, "high", # "always encourages you",
-                             ifelse(df_long$encouragement == 2, "medium", # "sometimes encourages you",
-                             ifelse(df_long$encouragement == 3, "low", NA))) # "never encourages you", NA)))
+df_long$encouragement <- ifelse(df_long$encouragement == 1, "always encourages you",
+                             ifelse(df_long$encouragement == 2, "sometimes encourages you",
+                             ifelse(df_long$encouragement == 3, "never encourages you", NA)))
 
 row.names(df_long) <- 1:nrow(df_long)
 
 #set NAs on frequency to 0
-df_long$sportsfreq[is.na(df_long$sportsfreq)] <- 0
+#df_long$sportsfreq[is.na(df_long$sportsfreq)] <- 0
+#OR: leave these out in the analyses; to distinguish among those who are currently active, those who are relatively (in)active
 
-#manually make interaction variables
-#GENDER
-df_long$comparisonhigh.FEMALE <- ifelse(df_long$comparison=="high" & df_long$female==1, 1,0)
-df_long$comparisonmedium.FEMALE <- ifelse(df_long$comparison=="medium" & df_long$female==1, 1,0)
-df_long$comparisonlow.FEMALE <- ifelse(df_long$comparison=="low" & df_long$female==1, 1,0)
+#remove "chosen" and "options" variable
+#names(df_long)
+data <- df_long[,-c(6,11)]
+#recode Y
+data$choice <- ifelse(data$choice==TRUE,1,0)
 
-df_long$knowledgehigh.FEMALE <- ifelse(df_long$knowledge=="high" & df_long$female==1, 1,0)
-df_long$knowledgemedium.FEMALE <- ifelse(df_long$knowledge=="medium" & df_long$female==1, 1,0)
-df_long$knowledgelow.FEMALE <- ifelse(df_long$knowledge=="low" & df_long$female==1, 1,0)
+#convert features to factor level
+#names(data)
+cols_to_convert <- c("comparison", "knowledge", "companionship", "encouragement","activeW2","gender", "set")
+data[cols_to_convert] <- lapply(data[cols_to_convert], as.factor)
 
-df_long$companionshiphigh.FEMALE <- ifelse(df_long$companionship=="high" & df_long$female==1, 1,0)
-df_long$companionshipmedium.FEMALE <- ifelse(df_long$companionship=="medium" & df_long$female==1, 1,0)
-df_long$companionshiplow.FEMALE <- ifelse(df_long$companionship=="low" & df_long$female==1, 1,0)
+#re-order
+data$comparison <- factor(data$comparison, levels = c("really likes to compare sports performances","somewhat likes to compare sports performances","does not like to compare sports performances"))
 
-df_long$encouragementhigh.FEMALE <- ifelse(df_long$encouragement=="high" & df_long$female==1, 1,0)
-df_long$encouragementmedium.FEMALE <- ifelse(df_long$encouragement=="medium" & df_long$female==1, 1,0)
-df_long$encouragementlow.FEMALE <- ifelse(df_long$encouragement=="low" & df_long$female==1, 1,0)
+data$knowledge <- factor(data$knowledge, levels = c("knows more than you about effective training and the right technique","knows as much as you about effective training and the right technique","knows less than you about effective training and the right technique"))
 
-#ACTIVE (YES/NO)
-df_long$comparisonhigh.ACTIVE <- ifelse(df_long$comparison=="high" & df_long$activeW2==1, 1,0)
-df_long$comparisonmedium.ACTIVE <- ifelse(df_long$comparison=="medium" & df_long$activeW2==1, 1,0)
-df_long$comparisonlow.ACTIVE <- ifelse(df_long$comparison=="low" & df_long$activeW2==1, 1,0)
+data$companionship <- factor(data$companionship, levels = c("exercises to socially engage","wants a combination of social interaction and purposeful training","exercises purposefully and seriously"))
 
-df_long$knowledgehigh.ACTIVE <- ifelse(df_long$knowledge=="high" & df_long$activeW2==1, 1,0)
-df_long$knowledgemedium.ACTIVE <- ifelse(df_long$knowledge=="medium" & df_long$activeW2==1, 1,0)
-df_long$knowledgelow.ACTIVE <- ifelse(df_long$knowledge=="low" & df_long$activeW2==1, 1,0)
+data$encouragement <- factor(data$encouragement, levels = c("always encourages you", "sometimes encourages you", "never encourages you"))
 
-df_long$companionshiphigh.ACTIVE <- ifelse(df_long$companionship=="high" & df_long$activeW2==1, 1,0)
-df_long$companionshipmedium.ACTIVE <- ifelse(df_long$companionship=="medium" & df_long$activeW2==1, 1,0)
-df_long$companionshiplow.ACTIVE <- ifelse(df_long$companionship=="low" & df_long$activeW2==1, 1,0)
-
-df_long$encouragementhigh.ACTIVE <- ifelse(df_long$encouragement=="high" & df_long$activeW2==1, 1,0)
-df_long$encouragementmedium.ACTIVE <- ifelse(df_long$encouragement=="medium" & df_long$activeW2==1, 1,0)
-df_long$encouragementlow.ACTIVE <- ifelse(df_long$encouragement=="low" & df_long$activeW2==1, 1,0)
+#save
+fsave(data, "conjoint.Rda")
 
 ```
 
-<!-- @RF: to-do, match ego-level covariates for descriptive statistics and moderational analyses (gender, sports history, age, ...) 
-perhaps i need to use wave 1...
---->
-
-<br>
+<!---
 
 ## make ready for mlogit
 
@@ -484,10 +307,12 @@ sum(dups)
 
 # and with no duplicates and no choice sets without choices, this should work 
 df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long")
+
+
 ```
 
 
-
+--->
 
 <br>
 
