@@ -53,7 +53,8 @@ gc()
 - `fpackage.check`: Check if packages are installed (and install if not) in R
 - `fsave`: Function to save data with time stamp in /correct directory
 - `fload`: Function to load R-objects under new names
-- `ftable`
+- `ftable`: html tables using `knitr`
+- `ftheme`: pretty `ggplot2` theme
 
 ```{r}
 fpackage.check <- function(packages) {
@@ -86,27 +87,57 @@ ftable <- function(x, caption=NULL) {
     kableExtra::kable_styling(bootstrap_options = c("striped", "hover")) %>%
     kableExtra::scroll_box(height="300px")
 }
+
+#extrafont::font_import(paths = c("C:/Users/u244147/Downloads/Jost/", prompt = FALSE))
+ftheme <- function() {
+  
+  #download font at https://fonts.google.com/specimen/Jost/
+  theme_minimal(base_family = "Jost") +
+    theme(panel.grid.minor = element_blank(),
+          plot.title = element_text(family = "Jost", face = "bold"),
+          axis.title = element_text(family = "Jost Medium"),
+          axis.title.x = element_text(hjust = 0),
+          axis.title.y = element_text(hjust = 1),
+          strip.text = element_text(family = "Jost", face = "bold",
+                                    size = rel(0.75), hjust = 0),
+          strip.background = element_rect(fill = "grey90", color = NA),
+          legend.position = "bottom")
+}
+
 ```
+
 
 <br>
 
 ## necessary packages
 
 - `tidyverse`: data wrangling
-- `cregg`
+- `cregg`: calculate and visualize marginal means and average marginal component effects
 
 ```{r, eval=FALSE}
 packages = c("tidyverse", "cregg")
 fpackage.check(packages)
 ```
+```{r fonts, echo=FALSE, warning=FALSE, results='hide'}
+# import font JOST
+#extrafont::font_import(pattern = "Jost")
+extrafont::loadfonts(device="win")
+
+# Set default theme and font stuff
+theme_set(ftheme())
+update_geom_defaults("text", list(family = "Jost", fontface = "plain"))
+update_geom_defaults("label", list(family = "Jost", fontface = "plain"))
+```
+
 
 <br>
 
 # import
 
-Load in data-set, created [here](link).
+Load in data-set, created [here](https://robfranken.github.io/DCE_sports/prep.html).
 
-You may also obtain it by downloading: `xfun::embedd`
+You may also obtain it by downloading: `r xfun::embed_file("./data shared/conjoint.Rda")`.
+
 
 ```{r}
 today <- gsub("-", "", Sys.Date())
@@ -115,29 +146,36 @@ data <- fload(paste0("./data/processed/", today, "conjoint.Rda"))
 
 <br>
 
-# Marginal means
 
-The descriptive marginal means (MMs) illustrate the average outcome for a specific level of a conjoint feature, taking into account all occurrences and averaging across other features. In our study, participants were presented with three alternatives in each choice set, resulting in MMs that average at 0.33. Values above 0.33 indicate features that enhance the attractiveness of alternatives, while values below 0.33 indicate features that reduce the attractiveness of alternatives.
+# MMs
+
+I report (unadjusted) marginal means (MMs) to provide a *descriptive* summary of respondent preferences, reflecting the percentage of, here sports partners, with a particular attribute-level, that is chosen by respondents.
+
+In our choice design, respondents were presented with 3 alternatives in each choice-set, resulting in MMs that average at about 0.33. Values above/below 0.33 indicate attribute-levels that enhance/decrease the attractiveness of alternatives. 
 
 ```{r, fig.width=10, warning=FALSE, message=FALSE} 
 f1 <- choice ~ comparison + knowledge + companionship + encouragement
-plot(cregg::mm(data, f1, id=~id), vline=1/3)
+mm <- cregg::mm(data, f1, id = ~id)
+ftable(mm)
+
+cbPalette <- c("#999999", "#E69F00", "#56B4E9", "#009E73", "#F0E442", "#0072B2", "#D55E00", "#CC79A7")
+plot(mm, vline = 1/3) + ftheme() + scale_colour_manual(values=cbPalette)
 ```
 
 <br>
 
+# AMCEs
 
-# Average marginal component effect
-
-Average marginal component effects (AMCEs).
+Average marginal component effects [@hainmueller2014; @leeper2020]
 
 ```{r, fig.width=10, warning=FALSE, message=FALSE} 
-amces <- cregg::cj(data, f1, id = ~id)
-ftable(amces[c("feature", "level", "estimate", "std.error")])
-plot(amces)
+amce <- cregg::cj(data, f1, id = ~id)
+ftable(amce)
+plot(amce) + ftheme() + scale_colour_manual(values=cbPalette)
 ```
 
 
+## Reference category diagnostics for AMCEs
 
 <style>
 .scrollbox {
@@ -147,163 +185,155 @@ plot(amces)
 }
 </style>
 
-## reference category diagnostics for AMCEs
-
-
 <div class="scrollbox">
 
 ```{r, fig.width=12, fig.height=12, warning=FALSE, message=FALSE, class.source='fold-hide'} 
-amce_diagnostic1 <- cregg::amce_by_reference(data, choice ~ comparison, ~comparison, id = ~id)
-amce_diagnostic2 <- cregg::amce_by_reference(data, choice ~ knowledge, ~knowledge, id = ~id)
-amce_diagnostic3 <- cregg::amce_by_reference(data, choice ~ companionship, ~companionship, id = ~id)
-amce_diagnostic4 <- cregg::amce_by_reference(data, choice ~ encouragement, ~encouragement, id = ~id)
+amce_diagnostic1 <- cregg::amce_by_reference(data, choice ~ comparison, variable = ~comparison, id = ~id)
+amce_diagnostic2 <- cregg::amce_by_reference(data, choice ~ knowledge, variable = ~knowledge, id = ~id)
+amce_diagnostic3 <- cregg::amce_by_reference(data, choice ~ companionship, variable = ~companionship, id = ~id)
+amce_diagnostic4 <- cregg::amce_by_reference(data, choice ~ encouragement, variable = ~encouragement, id = ~id)
 
-plot1 <- plot(amce_diagnostic1, group = "REFERENCE", legend_title = "Ref. cat.")
-plot2 <- plot(amce_diagnostic2, group = "REFERENCE", legend_title = "Ref. cat.")
-plot3 <- plot(amce_diagnostic3, group = "REFERENCE", legend_title = "Ref. cat.")
-plot4 <- plot(amce_diagnostic4, group = "REFERENCE", legend_title = "Ref. cat.")
+plot1 <- plot(amce_diagnostic1, group = "REFERENCE", legend_title = "Ref. cat.") + ftheme() + scale_colour_manual(values=cbPalette)
+plot2 <- plot(amce_diagnostic2, group = "REFERENCE", legend_title = "Ref. cat.") + ftheme() + scale_colour_manual(values=cbPalette)
+plot3 <- plot(amce_diagnostic3, group = "REFERENCE", legend_title = "Ref. cat.") + ftheme() + scale_colour_manual(values=cbPalette)
+plot4 <- plot(amce_diagnostic4, group = "REFERENCE", legend_title = "Ref. cat.") + ftheme() + scale_colour_manual(values=cbPalette)
 
 multiplot <- gridExtra::grid.arrange(plot1,plot2,plot3,plot4,ncol=1)
 ```
+
 </div>
 
 <br>
 
 # Subgroup analysis
 
-## Subgroup marginal means
+## Subgroup marginal means {.tabset .tabset-fade} 
 
-Let's ensure that there are no substantial variations in preferences within-respondents across multiple conjoint choice-tasks:
+Estimate conditional marginal means and differences between conditional marginal means to describe differences in preference level between subgroups. To formally test for groups differences in preferences toward particular features, I use omnibus nested model comparisons. 
 
-```{r, fig.width=10, warning=FALSE, message=FALSE} 
-mm_byset <- cregg::cj(data, f1, id = ~id, estimate = "mm", by = ~set)
-plot(mm_byset, group = "set", vline = 1/3)
-```
-
-<br>
-
-## Test of preference heterogeneity 
-
-A nested model comparison test:
-
-```{r}
-cregg::cj_anova(data, f1, by = ~set)
-```
-
-<br>
-
-## Differences for male vs. female
-
-### MMs
+### Male vs female
 
 ```{r, fig.width=10, warning=FALSE, message=FALSE} 
 data$Sex <- NA_real_
 data$Sex[data$gender == "man"] <- 1L
 data$Sex[data$gender == "woman"] <- 2L
-
 data$Sex <- factor(data$Sex, 1:2, c("Male", "Female"))
 
-x <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "mm", by = ~Sex)
-plot(x, group = "Sex", vline=1/3)
+#conditional MM
+mm <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "mm", by = ~Sex)
+mm <- mm %>% arrange(level, feature)
+
+#difference between subgroups
+diff_mm <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "mm_diff", by = ~Sex)
+
+#combine plots
+p <- plot(rbind(mm, diff_mm)) + ggplot2::facet_wrap(~ BY, ncol = 3L) + ftheme() + scale_colour_manual(values=cbPalette)
+
+#i want different vlines (0.3 for mm; 0 for difference)
+p$layers[[1]] <- NULL #first remove existing layer
+
+vlines <- data.frame(
+  BY = c("Male", "Female", "Female - Male"), 
+  vline_x = c(1/3, 1/3, 0) 
+)
+vlines$BY <- factor(vlines$BY, levels = c("Female", "Male", "Female - Male"))
+
+p <- p + geom_vline(data = vlines, aes(xintercept = vline_x), color = "grey") 
+p
+
+#test of preference heterogeneity (nested model comparison test)
+cregg::cj_anova(na.omit(data), choice ~ comparison, by = ~Sex)
+cregg::cj_anova(na.omit(data), choice ~ knowledge, by = ~Sex)
+cregg::cj_anova(na.omit(data), choice ~ companionship, by = ~Sex)
+cregg::cj_anova(na.omit(data), choice ~ encouragement, by = ~Sex)
 ```
 
-### Conditional AMCEs
-
-```{r, fig.width=10, warning=FALSE, message=FALSE} 
-amces <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "amce", by = ~Sex)
-diff_amces <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "amce_diff", by = ~Sex)
-ftable(amces)
-ftable(diff_amces)
-plot(rbind(amces, diff_amces)) + ggplot2::facet_wrap(~BY, ncol = 3L)
-```
-
-<br>
-
-## Differences for active vs. non-active
-
-### MMs
+### active vs non-active
 
 ```{r, fig.width=10, warning=FALSE, message=FALSE} 
 data$Active <- NA_real_
-
 data$Active[data$activeW2 == "yes"] <- 2L
 data$Active[data$activeW2 == "no"] <- 1L
+data$Active <- factor(data$Active, 1:2, c("Not active", "Active"))
 
-data$Active <- factor(data$Active, 1:2, c("No", "Yes"))
+#conditional MM
+mm <- cregg::cj(data, f1, id = ~id, estimate = "mm", by = ~Active)
+mm <- mm %>% arrange(level, feature)
 
-x <- cregg::cj(data, f1, id = ~id, estimate = "mm", by = ~Active)
-plot(x, group = "Active", vline=1/3)
+#difference between subgroups
+diff_mm <- cregg::cj(data, f1, id = ~id, estimate = "mm_diff", by = ~Active)
+
+#combine plots
+p <- plot(rbind(mm, diff_mm)) + ggplot2::facet_wrap(~ BY, ncol = 3L) + ftheme() + scale_colour_manual(values=cbPalette)
+
+#i want different vlines (0.3 for mm; 0 for difference)
+p$layers[[1]] <- NULL #first remove existing layer
+
+vlines <- data.frame(
+  BY = c("Not active", "Active", "Active - Not active"), 
+  vline_x = c(1/3, 1/3, 0) 
+)
+vlines$BY <- factor(vlines$BY, levels = c("Active", "Not active", "Active - Not active"))
+
+p <- p + geom_vline(data = vlines, aes(xintercept = vline_x), color = "grey") 
+p
+
+#test of preference heterogeneity (nested model comparison test)
+cregg::cj_anova(data, choice ~ comparison, by = ~Active)
+cregg::cj_anova(data, choice ~ knowledge, by = ~Active)
+cregg::cj_anova(data, choice ~ companionship, by = ~Active)
+cregg::cj_anova(data, choice ~ encouragement, by = ~Active)
 ```
 
-### Conditional AMCEs
+
+
+### High vs low frequency
 
 ```{r, fig.width=10, warning=FALSE, message=FALSE} 
-amces <- cregg::cj(data, f1, id = ~id, estimate = "amce", by = ~Active)
+#sports_frequency <- ifelse(is.na(data$sportsfreq), 0, as.numeric(data$sportsfreq))
+#hist(sports_frequency)
+#ftable(psych::describe(sports_frequency))
 
-diff_amces <- cregg::cj(data, f1, id = ~id, estimate = "amce_diff", by = ~Active)
-ftable(amces)
-ftable(diff_amces)
-plot(rbind(amces, diff_amces)) + ggplot2::facet_wrap(~BY, ncol = 3L)
-```
-
-<br>
-
-## Differences across activity levels
-
-### MMs
-
-```{r, fig.width=10, warning=FALSE, message=FALSE} 
+#here, focus only on those currently active..
 data$Frequency <- NA_real_
-
-hist(as.numeric(data$sportsfreq,na.rm=TRUE))
-ftable(psych::describe(data$sportsfreq,na.rm=TRUE), caption= "Running frequency statistics")
-
 data$Frequency[data$sportsfreq < 3] <- 1L
 data$Frequency[data$sportsfreq >= 3] <- 2L
-
 data$Frequency <- factor(data$Frequency, 1:2, c("Low frequency", "High frequency"))
 
-x <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "mm", by = ~Frequency)
-plot(x, group = "Frequency", vline=1/3)
+#conditional MM
+mm <- cregg::cj(data, f1, id = ~id, estimate = "mm", by = ~Frequency)
+mm <- mm %>% arrange(level, feature)
+
+#difference between subgroups
+diff_mm <- cregg::cj(data, f1, id = ~id, estimate = "mm_diff", by = ~Frequency)
+
+#combine plots
+p <- plot(rbind(mm, diff_mm)) + ggplot2::facet_wrap(~ BY, ncol = 3L) + ftheme() + scale_colour_manual(values=cbPalette)
+
+#i want different vlines (0.3 for mm; 0 for difference)
+p$layers[[1]] <- NULL #first remove existing layer
+
+vlines <- data.frame(
+  BY = c("High frequency","Low frequency", "High frequency - Low frequency"), 
+  vline_x = c(1/3, 1/3, 0) 
+)
+vlines$BY <- factor(vlines$BY, levels = c("High frequency","Low frequency", "High frequency - Low frequency"))
+
+p <- p + geom_vline(data = vlines, aes(xintercept = vline_x), color = "grey") 
+p
+
+#test of preference heterogeneity (nested model comparison test)
+
+#set missings on sex to "Male" (or female; so they are not dropped...)
+data$Sex[is.na(data$Sex)] <- "Male"
+
+cregg::cj_anova(na.omit(data), choice ~ comparison, by = ~Frequency)
+cregg::cj_anova(na.omit(data), choice ~ knowledge, by = ~Frequency)
+cregg::cj_anova(na.omit(data), choice ~ companionship, by = ~Frequency)
+cregg::cj_anova(na.omit(data), choice ~ encouragement, by = ~Frequency)
 ```
 
-### Conditional AMCEs
-
-```{r, fig.width=10, warning=FALSE, message=FALSE} 
-amces <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "amce", by = ~Frequency)
-
-diff_amces <- cregg::cj(na.omit(data), f1, id = ~id, estimate = "amce_diff", by = ~Frequency)
-ftable(amces)
-ftable(diff_amces)
-plot(rbind(amces, diff_amces)) + ggplot2::facet_wrap(~BY, ncol = 3L)
-```
-
-<br>
-
-# Interactions
-<div class="scrollbox">
-
-```{r, fig.width=12, fig.height=12, warning=FALSE, message=FALSE, class.source='fold-hide'} 
-
-data$comparison_sex <- interaction(data$comparison, data$Sex, sep = "_")
-data$knowledge_sex <- interaction(data$knowledge, data$Sex, sep = "_")
-data$companionship_sex <- interaction(data$companionship, data$Sex, sep = "_")
-data$encouragement_sex <- interaction(data$encouragement, data$Sex, sep = "_")
-#average component interaction effect
-acies1 <- cregg::amce(data, choice ~ comparison_sex, id = ~id)
-acies2 <- cregg::amce(data, choice ~ knowledge_sex, id = ~id)
-acies3 <- cregg::amce(data, choice ~ companionship_sex, id = ~id)
-acies4 <- cregg::amce(data, choice ~ encouragement_sex, id = ~id)
-
-plot1 <- plot(acies1)
-plot2 <- plot(acies2)
-plot3 <- plot(acies3)
-plot4 <- plot(acies4)
-
-multiplot <- gridExtra::grid.arrange(plot1,plot2,plot3,plot4,ncol=1)
-```
-
-</div>
+## {.unlisted .unnumbered}
 
 <br>
 
@@ -314,7 +344,10 @@ multiplot <- gridExtra::grid.arrange(plot1,plot2,plot3,plot4,ncol=1)
 Of conjoint features (to ensure equal display frequency):
 
 ```{r, fig.width=12, fig.height=12, warning=FALSE, message=FALSE}
-plot(cregg::cj_freqs(data, choice ~ comparison + knowledge + companionship + encouragement + Sex + Active + Frequency, id = ~id))
+plot(cregg::cj_freqs(data, choice ~ comparison + knowledge + companionship + encouragement + Sex + Active + Frequency, id = ~id)) + ftheme() + scale_colour_manual(values=cbPalette)
 ```
 
 ---
+
+# References
+

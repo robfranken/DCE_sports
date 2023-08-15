@@ -134,6 +134,8 @@ df1. <- df1[which(df1$SAMPLE_ID %in% df2$SAMPLE_ID), ]
 # interaction variables
 # current involvement
 #df2$V5
+
+
 df2$activeW2 <- ifelse(df2$V5 == 1, "no", "yes")
 prop.table(table(df2$activeW2, useNA = "always")) #64 percent currently active, at w2
 
@@ -152,7 +154,7 @@ df2$sportsfreq[which(df2$activeW2=="yes")] <- rowSums(cbind(sport1,sport2,sport3
 #table(df2$sportsfreq)
 #cap at 14, only 1 higher.
 df2$sportsfreq <- ifelse(df2$sportsfreq>14, 14, df2$sportsfreq)
-#psych::describe(df2$sportsfreq)
+psych::describe(df2$sportsfreq)
 
 #subset dce data and relevant covariates
 #names(df2)
@@ -271,54 +273,13 @@ data$companionship <- factor(data$companionship, levels = c("exercises to social
 
 data$encouragement <- factor(data$encouragement, levels = c("always encourages you", "sometimes encourages you", "never encourages you"))
 
-#save
-fsave(data, "conjoint.Rda")
+#fix(data)
 
 ```
-
-<!---
-
-## make ready for mlogit
-
-```{r, eval=F}
-# first we need an id_alt (identification of alternatives), thus specific combi of facets
-{
-    df_long$id_alt <- as.numeric(as.factor(trimws(df_long$comparison))) * 1000 + as.numeric(as.factor(trimws(df_long$knowledge))) *
-        100 + as.numeric(as.factor(trimws(df_long$companionship))) * 10 + as.numeric(as.factor(trimws(df_long$encouragement)))
-
-}
-
-# we also need an id for each specific choice set, thus combi of respnr and set
-df_long$id_choice <- df_long$id * 10 + df_long$set
-
-length(unique(df_long$id))
-length(unique(df_long$id_choice))
-sum(df_long$choice)#no missings on choice. !be aware these need to be deleted for mlogit. 
-
-# need to delete id_choice where no choice is made
-
-# do we have duplicates?
-df_long %>%
-    select(c("id_choice", "id_alt")) -> df_sel
-dups <- duplicated(df_sel)
-sum(dups)
-
-#head(df_long)
-
-# and with no duplicates and no choice sets without choices, this should work 
-df_ml <- mlogit.data(df_long, choice = "choice", id.var = "id", chid.var = "id_choice", alt.var = "id_alt", shape = "long")
-
-
-```
-
-
---->
 
 <br>
 
-## save data object
-```{r, eval=F}
-fsave(df_ml, "io_ml.RData")
+## save data
+```{r,eval=FALSE}
+fsave(data, "conjoint.Rda")
 ```
-
-
