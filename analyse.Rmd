@@ -331,6 +331,7 @@ cregg::cj_anova(na.omit(data), choice ~ comparison, by = ~Frequency)
 cregg::cj_anova(na.omit(data), choice ~ knowledge, by = ~Frequency)
 cregg::cj_anova(na.omit(data), choice ~ companionship, by = ~Frequency)
 cregg::cj_anova(na.omit(data), choice ~ encouragement, by = ~Frequency)
+
 ```
 
 ## {.unlisted .unnumbered}

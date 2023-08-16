@@ -151,6 +151,8 @@ sport3 <- ifelse(df2$V6c==1, 7, ifelse(df2$V6c==2, 4, ifelse(df2$V6c==3, 1.5, if
 df2$sportsfreq <- NA
 df2$sportsfreq[which(df2$activeW2=="yes")] <- rowSums(cbind(sport1,sport2,sport3)[which(df2$activeW2=="yes"),], na.rm=TRUE)
 
+df2$V6a
+
 #table(df2$sportsfreq)
 #cap at 14, only 1 higher.
 df2$sportsfreq <- ifelse(df2$sportsfreq>14, 14, df2$sportsfreq)
